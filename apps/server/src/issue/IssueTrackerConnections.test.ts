@@ -9,6 +9,7 @@ import * as SqlClient from "effect/sql/SqlClient";
 import { IssueTrackerKind, type ProjectId } from "@t3tools/contracts";
 import {
   IssueTrackerError,
+  type IssueTrackerCredential,
   type StandaloneIssueTrackerApi,
 } from "@t3tools/source-control-core/server/IssueTracker";
 
@@ -19,6 +20,7 @@ import * as IssueTrackerConnections from "./IssueTrackerConnections.ts";
 import * as IssueTrackerRegistry from "./IssueTrackerRegistry.ts";
 
 const LINEAR = IssueTrackerKind.make("linear");
+const JIRA = IssueTrackerKind.make("jira");
 
 describe("IssueTrackerConnections", () => {
   it.effect("keeps each account's key and bindings apart, and no key past its account", () => {
@@ -29,7 +31,7 @@ describe("IssueTrackerConnections", () => {
     const tracker = {
       kind: LINEAR,
       standalone: { tracker: LINEAR, host: "linear.app" },
-      probeCredential: (token: string) =>
+      probeCredential: ({ token }: IssueTrackerCredential) =>
         token === "bad"
           ? Effect.fail(
               new IssueTrackerError({
@@ -46,6 +48,20 @@ describe("IssueTrackerConnections", () => {
               { account: `user-${token}`, scopes: [] },
             ),
     } as unknown as StandaloneIssueTrackerApi;
+    const jira: StandaloneIssueTrackerApi = {
+      ...tracker,
+      kind: JIRA,
+      standalone: {
+        tracker: JIRA,
+        host: "atlassian.net",
+        displayName: "Jira",
+        scopeNoun: "project",
+        credential: {
+          label: "API token",
+          fields: [{ key: "site", label: "Site" }],
+        },
+      },
+    };
     const layer = IssueTrackerConnections.layer.pipe(
       Layer.provideMerge(IssueTrackerBindings.layer),
       Layer.provideMerge(
@@ -53,7 +69,7 @@ describe("IssueTrackerConnections", () => {
           SqlitePersistence.layerMemory,
           Layer.succeed(
             IssueTrackerRegistry.IssueTrackerRegistry,
-            IssueTrackerRegistry.fromTrackers([tracker]),
+            IssueTrackerRegistry.fromTrackers([tracker, jira]),
           ),
           Layer.mock(ServerSecretStore.ServerSecretStore)({
             get: (name) =>
@@ -134,6 +150,26 @@ describe("IssueTrackerConnections", () => {
           }),
         ),
       ).toMatchObject({ detail: "This account is not saved on the server." });
+
+      const jiraCredential = {
+        tracker: JIRA,
+        token: "fixture",
+        fields: { site: "work.atlassian.net" },
+      };
+      yield* connections.connect(jiraCredential);
+      const otherJira = yield* connections.connect({
+        ...jiraCredential,
+        addAccount: true,
+        fields: { site: "home.atlassian.net" },
+      });
+      expect((yield* connections.list).accounts).toMatchObject([
+        { accountId: otherJira.accountId, fields: { site: "home.atlassian.net" } },
+      ]);
+      expect(
+        yield* Effect.flip(connections.connect({ ...jiraCredential, addAccount: true })),
+      ).toMatchObject({ detail: "This credential is already connected as another account." });
+      yield* connections.connect({ tracker: JIRA, accountId: otherJira.accountId, token: null });
+      yield* connections.connect({ tracker: JIRA, token: null });
 
       // An account that cannot be saved takes its new key with it.
       yield* (yield* SqlClient.SqlClient)`DROP TABLE issue_tracker_accounts`;
