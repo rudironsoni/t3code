@@ -1,5 +1,7 @@
 "use strict";
 
+// Expo replaces the empty signing team with appleTeamId. Reverse-ordered mods run after extension creation.
+
 const fs = require("fs");
 const path = require("path");
 const { withDangerousMod, withXcodeProject } = require("expo/config-plugins");
@@ -70,9 +72,6 @@ function withExtensionDisplayNameBuildSetting(config, displayName) {
       const buildConfiguration = buildConfigurations[reference.value];
       if (buildConfiguration?.buildSettings) {
         buildConfiguration.buildSettings.INFOPLIST_KEY_CFBundleDisplayName = `"${displayName}"`;
-        if (cfg.ios?.appleTeamId) {
-          buildConfiguration.buildSettings.DEVELOPMENT_TEAM = cfg.ios.appleTeamId;
-        }
       }
     }
     return cfg;
