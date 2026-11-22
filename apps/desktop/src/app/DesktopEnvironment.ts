@@ -17,6 +17,7 @@ import { resolveLinuxDesktopEntryName } from "./DesktopEarlyElectronStartup.ts";
 import { resolveDesktopBaseDir, resolveDesktopStateDir } from "./DesktopStatePaths.ts";
 import { isNightlyDesktopVersion } from "../updates/updateChannels.ts";
 import type { OtlpProtocol } from "@t3tools/shared/observability";
+import { isLocalDesktopVersion } from "@t3tools/shared/semver";
 
 export interface MakeDesktopEnvironmentInput {
   readonly dirname: string;
@@ -148,18 +149,25 @@ const make = Effect.fn("desktop.environment.make")(function* (
   const homeDirectory = input.homeDirectory;
   const devServerUrl = config.devServerUrl;
   const isDevelopment = Option.isSome(devServerUrl);
+  const isLocal = input.platform === "darwin" && isLocalDesktopVersion(input.appVersion);
+  const t3Home = isLocal ? Option.some(path.join(homeDirectory, ".t3-local")) : config.t3Home;
   const appDataDirectory =
     input.platform === "win32"
       ? Option.getOrElse(config.appDataDirectory, () =>
           path.join(homeDirectory, "AppData", "Roaming"),
         )
       : input.platform === "darwin"
-        ? path.join(homeDirectory, "Library", "Application Support")
+        ? path.join(
+            homeDirectory,
+            "Library",
+            "Application Support",
+            ...(isLocal ? ["T3 Code (Local)"] : []),
+          )
         : Option.getOrElse(config.xdgConfigHome, () => path.join(homeDirectory, ".config"));
   const baseDir = resolveDesktopBaseDir({
     homeDirectory,
     joinPath: path.join,
-    t3Home: config.t3Home,
+    t3Home,
   });
   const rootDir = path.resolve(input.dirname, "../../..");
   const appRoot = input.isPackaged ? input.appPath : rootDir;
@@ -167,16 +175,19 @@ const make = Effect.fn("desktop.environment.make")(function* (
     input.isPackaged && input.platform === "win32"
       ? path.join(input.resourcesPath, "server.asar")
       : appRoot;
-  const branding = resolveDesktopAppBranding({
+  const defaultBranding = resolveDesktopAppBranding({
     isDevelopment,
     appVersion: input.appVersion,
   });
+  const branding = isLocal
+    ? { ...defaultBranding, displayName: "T3 Code (Local)" }
+    : defaultBranding;
   const displayName = branding.displayName;
   const stateDir = resolveDesktopStateDir({
     baseDir,
     isDevelopment,
     joinPath: path.join,
-    t3Home: config.t3Home,
+    t3Home,
   });
   const linuxApplicationsDir = path.join(
     Option.getOrElse(config.xdgDataHome, () => path.join(homeDirectory, ".local", "share")),

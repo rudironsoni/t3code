@@ -534,9 +534,23 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
         undefined,
         undefined,
       );
+      const local = yield* createBuildConfig(
+        "mac",
+        "dir",
+        "0.0.33-local",
+        false,
+        false,
+        undefined,
+        undefined,
+      );
 
       assert.isNull(preview.publish);
       assert.isNull(previewChannel.publish);
+      assert.isNull(local.publish);
+      assert.equal(local.appId, "com.t3tools.t3code.local");
+      assert.equal(local.productName, "T3 Code (Local)");
+      assert.nestedPropertyVal(local, "mac.protocols.length", 0);
+      assert.equal(release.appId, "com.t3tools.t3code");
       assert.deepStrictEqual(release.publish, [
         {
           provider: "github",
