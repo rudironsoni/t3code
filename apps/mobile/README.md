@@ -99,15 +99,6 @@ Build and install a self-contained Release app that does not need Metro:
 vp run ios:release
 ```
 
-To install a second copy on an iPhone, use a different bundle identifier and your Apple Developer
-team ID. Run the same command again with the same values to update that copy.
-
-```bash
-T3_PHONE_TEAM_ID=ABCD123456 \
-T3_PHONE_BUNDLE_ID=com.example.t3code.dev \
-vp run ios:release --device
-```
-
 The Personal Team equivalent also needs a unique bundle identifier:
 
 ```bash
