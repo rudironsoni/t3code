@@ -7,6 +7,10 @@ interface ParsedSemver {
 
 const SEMVER_NUMBER_SEGMENT = /^\d+$/;
 
+export function isLocalDesktopVersion(version: string): boolean {
+  return /^\d+\.\d+\.\d+-local$/u.test(version);
+}
+
 export function normalizeSemverVersion(version: string): string {
   const [versionWithoutBuildMetadata = ""] = version.trim().split("+", 1);
   const [main, ...prereleaseParts] = versionWithoutBuildMetadata.split("-");
