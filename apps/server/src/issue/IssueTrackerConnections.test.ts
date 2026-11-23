@@ -30,7 +30,13 @@ describe("IssueTrackerConnections", () => {
     let random = 0;
     const tracker = {
       kind: LINEAR,
-      standalone: { tracker: LINEAR, host: "linear.app" },
+      standalone: {
+        tracker: LINEAR,
+        host: "linear.app",
+        displayName: "Linear",
+        scopeNoun: "team",
+        credential: { label: "Personal API key", helpUrl: null },
+      },
       probeCredential: ({ token }: IssueTrackerCredential) =>
         token === "bad"
           ? Effect.fail(
@@ -58,7 +64,8 @@ describe("IssueTrackerConnections", () => {
         scopeNoun: "project",
         credential: {
           label: "API token",
-          fields: [{ key: "site", label: "Site" }],
+          helpUrl: null,
+          fields: [{ key: "site", label: "Site", placeholder: null }],
         },
       },
     };
