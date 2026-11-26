@@ -5793,5 +5793,10 @@
   "c92a0bab54261695": "Reply to this response",
   "d201a2c11fc08817": "Edit from here",
   "d226ee7c6afacac0": "Wait for attachments to finish preparing before rewinding.",
-  "dd0c25bece58ccf5": "Revert repositories too"
+  "dd0c25bece58ccf5": "Revert repositories too",
+  "45fa271ea0e1ac8e": "Beta",
+  "e4e91d155cb6a9b4": "Boring sidebar (group by project)",
+  "3a678332fc7142f7": "Group sidebar threads into project folders. Pinned threads stay on top, and Snoozed and Settled stay below the folders.",
+  "ac1e5c94d1ad3c6a": "Two-line folder rows",
+  "f079556d67367fe7": "Show folder threads on two lines: the title, then the branch, pull request, and agent."
 }

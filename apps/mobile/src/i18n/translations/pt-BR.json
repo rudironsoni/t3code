@@ -5785,5 +5785,10 @@
   "c92a0bab54261695": "Responder a esta resposta",
   "d201a2c11fc08817": "Editar a partir daqui",
   "d226ee7c6afacac0": "Aguarde a preparação dos anexos antes de voltar.",
-  "dd0c25bece58ccf5": "Reverter repositórios também"
+  "dd0c25bece58ccf5": "Reverter repositórios também",
+  "45fa271ea0e1ac8e": "Beta",
+  "e4e91d155cb6a9b4": "Barra lateral sem graça (agrupar por projeto)",
+  "3a678332fc7142f7": "Agrupa as threads da barra lateral em pastas de projeto. As threads fixadas ficam no topo, e Adiadas e Concluídas ficam abaixo das pastas.",
+  "ac1e5c94d1ad3c6a": "Linhas de pasta em duas linhas",
+  "f079556d67367fe7": "Mostra as threads das pastas em duas linhas: o título e, abaixo, o branch, o pull request e o agente."
 }

@@ -5785,5 +5785,10 @@
   "c92a0bab54261695": "Responder a esta respuesta",
   "d201a2c11fc08817": "Editar desde aquí",
   "d226ee7c6afacac0": "Espera a que terminen de prepararse los adjuntos antes de volver atrás.",
-  "dd0c25bece58ccf5": "Revertir también los repositorios"
+  "dd0c25bece58ccf5": "Revertir también los repositorios",
+  "45fa271ea0e1ac8e": "Beta",
+  "e4e91d155cb6a9b4": "Barra lateral simple (agrupar por proyecto)",
+  "3a678332fc7142f7": "Agrupa los hilos de la barra lateral en carpetas de proyecto. Los hilos fijados quedan arriba, y Pospuestos y Resueltos quedan debajo de las carpetas.",
+  "ac1e5c94d1ad3c6a": "Filas de carpeta en dos líneas",
+  "f079556d67367fe7": "Muestra los hilos de las carpetas en dos líneas: el título y, debajo, la rama, la pull request y el agente."
 }
