@@ -429,11 +429,6 @@ export function ThreadListV2ProjectFolder(props: {
       )}
       onPress={() => props.onToggle(projectKey)}
     >
-      <SymbolView
-        name={expanded ? "chevron.down" : "chevron.right"}
-        size={10}
-        tintColorClassName={tint}
-      />
       <ProjectFavicon
         environmentId={project.environmentId}
         faviconPath={project.faviconPath}
@@ -452,6 +447,11 @@ export function ThreadListV2ProjectFolder(props: {
       >
         {label}
       </Text>
+      <SymbolView
+        name={expanded ? "chevron.down" : "chevron.right"}
+        size={10}
+        tintColorClassName={tint}
+      />
     </Pressable>
   );
 }
