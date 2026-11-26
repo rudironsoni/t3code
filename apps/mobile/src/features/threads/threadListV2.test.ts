@@ -949,6 +949,7 @@ describe("buildThreadListV2ListItems", () => {
       id: projectId,
       title: "Project",
       workspaceRoot: "/projects/project-1",
+      projectIcon: { kind: "emoji", emoji: "📌" } as const,
       repositoryIdentity: null,
       defaultModelSelection: null,
       scripts: [],
@@ -987,7 +988,11 @@ describe("buildThreadListV2ListItems", () => {
       "v2-settled-shelf",
       "settled",
     ]);
-    expect(collapsed[1]).toMatchObject({ expanded: false, count: 2 });
+    expect(collapsed[1]).toMatchObject({
+      expanded: false,
+      count: 2,
+      project: { projectIcon: project.projectIcon },
+    });
     expect(collapsed[2]).toMatchObject({ folderRow: "two-line" });
 
     const expanded = buildThreadListV2ListItems({
@@ -999,6 +1004,17 @@ describe("buildThreadListV2ListItems", () => {
       { folderRow: "single-line" },
       { folderRow: "single-line" },
     ]);
+
+    const updated = buildThreadListV2ListItems({
+      ...input,
+      projectFolders: {
+        ...input.projectFolders,
+        scopes: [
+          { ...scope, representative: { ...project, projectIcon: { kind: "emoji", emoji: "🚀" } } },
+        ],
+      },
+    });
+    expect(threadListV2ListItemsAreEqual(collapsed[1]!, updated[1]!)).toBe(false);
   });
 
   it("leads the list with unsent drafts and queued tasks, preserving section dividers", () => {
