@@ -5796,5 +5796,10 @@
   "e4e91d155cb6a9b4": "Enkelt sidofält (gruppera per projekt)",
   "3a678332fc7142f7": "Gruppera trådar i sidofältet i projektmappar. Fästa trådar ligger överst, och Snoozade och Klara ligger under mapparna.",
   "ac1e5c94d1ad3c6a": "Mapprader på två rader",
-  "f079556d67367fe7": "Visa trådar i mappar på två rader: titeln, sedan gren, pull request och agent."
+  "f079556d67367fe7": "Visa trådar i mappar på två rader: titeln, sedan gren, pull request och agent.",
+  "c4e9b5a68368e9e8": "Inga träffar",
+  "9a1dafe07b8ce33d": "{current} av {total}",
+  "0d8761c57796fb94": "Sök i tråden",
+  "f67b82db6ff66321": "Föregående träff",
+  "bac07cd397c7d1a8": "Nästa träff"
 }

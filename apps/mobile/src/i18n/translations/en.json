@@ -5798,5 +5798,10 @@
   "e4e91d155cb6a9b4": "Boring sidebar (group by project)",
   "3a678332fc7142f7": "Group sidebar threads into project folders. Pinned threads stay on top, and Snoozed and Settled stay below the folders.",
   "ac1e5c94d1ad3c6a": "Two-line folder rows",
-  "f079556d67367fe7": "Show folder threads on two lines: the title, then the branch, pull request, and agent."
+  "f079556d67367fe7": "Show folder threads on two lines: the title, then the branch, pull request, and agent.",
+  "c4e9b5a68368e9e8": "No matches",
+  "9a1dafe07b8ce33d": "{current} of {total}",
+  "0d8761c57796fb94": "Find in thread",
+  "f67b82db6ff66321": "Previous match",
+  "bac07cd397c7d1a8": "Next match"
 }

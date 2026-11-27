@@ -5790,5 +5790,10 @@
   "e4e91d155cb6a9b4": "Barre latérale classique (regrouper par projet)",
   "3a678332fc7142f7": "Regroupe les fils de la barre latérale dans des dossiers de projet. Les fils épinglés restent en haut, les fils reportés et clos restent sous les dossiers.",
   "ac1e5c94d1ad3c6a": "Lignes de dossier sur deux lignes",
-  "f079556d67367fe7": "Affiche les fils des dossiers sur deux lignes : le titre, puis la branche, la pull request et l’agent."
+  "f079556d67367fe7": "Affiche les fils des dossiers sur deux lignes : le titre, puis la branche, la pull request et l’agent.",
+  "c4e9b5a68368e9e8": "Aucun résultat",
+  "9a1dafe07b8ce33d": "{current} sur {total}",
+  "0d8761c57796fb94": "Rechercher dans le fil",
+  "f67b82db6ff66321": "Résultat précédent",
+  "bac07cd397c7d1a8": "Résultat suivant"
 }

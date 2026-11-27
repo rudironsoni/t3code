@@ -503,6 +503,10 @@ function ThreadRouteContent(
   const threadId = firstRouteParam(params.threadId);
   const routeThreadIdentity =
     environmentIdRaw !== null && threadId !== null ? `${environmentIdRaw}:${threadId}` : null;
+  const [findThreadIdentity, setFindThreadIdentity] = useState<string | null>(null);
+  if (findThreadIdentity !== null && findThreadIdentity !== routeThreadIdentity) {
+    setFindThreadIdentity(null);
+  }
   // The chosen mode survives thread switches; "route" only applies while the route
   // supplies an inspector, which is also the default whenever it does.
   const [chosenInspectorMode, setChosenInspectorMode] = useState<ThreadInspectorMode | null>(null);
@@ -1029,6 +1033,7 @@ function ThreadRouteContent(
   }
 
   const serverConfig = routeEnvironmentRuntime?.serverConfig ?? null;
+  const canFindInThread = !props.inspectorPresentation && serverConfig?.threadFind === true;
   return (
     <>
       {inspectorHeader}
@@ -1058,6 +1063,9 @@ function ThreadRouteContent(
               hasThreadCwd={selectedThreadCwd !== null}
               inspectorMode={inspectorMode}
               onOpenFilesInspector={handleOpenFilesInspector}
+              onFindInThread={
+                canFindInThread ? () => setFindThreadIdentity(routeThreadIdentity) : undefined
+              }
               onReturnToThread={props.onReturnToThread}
             />
           )
@@ -1065,6 +1073,8 @@ function ThreadRouteContent(
         canOperateThread={canOperateThread}
         selectedThread={selectedThreadWithDraftSettings ?? selectedThread}
         selectedThreadDetailRef={selectedThreadDetailRef}
+        findOpen={canFindInThread && findThreadIdentity !== null}
+        onCloseFind={() => setFindThreadIdentity(null)}
         contentPresentation={contentPresentation}
         screenTone={connectionTone(
           routeConnectionState,

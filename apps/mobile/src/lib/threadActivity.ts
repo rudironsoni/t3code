@@ -213,6 +213,17 @@ export type ThreadFeedEntry = ThreadFeedEntryContent & {
   readonly continuesWorkLog?: boolean;
 };
 
+export function matchesThreadFindEntry(entry: ThreadFeedEntry, entryId: string): boolean {
+  return (
+    (entry.type === "message" && entry.id === entryId) ||
+    (entry.type === "activity-group" &&
+      entry.activities.some(
+        ({ projectedItem }) =>
+          projectedItem.item.type === "proposed_plan" && projectedItem.item.id === entryId,
+      ))
+  );
+}
+
 type ThreadFeedEntryContent =
   | Extract<RawThreadFeedEntry, { type: "message" | "html-render" | "sent-message" | "mcp-app" }>
   | {

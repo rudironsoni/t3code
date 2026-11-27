@@ -265,6 +265,7 @@ import {
   type ThreadFeedMessage,
   type ThreadFeedLatestRun,
   messageFoldRunId,
+  matchesThreadFindEntry,
 } from "../../lib/threadActivity";
 import type { ThreadContentPresentation } from "./threadContentPresentation";
 import { type ThreadWorkGroupScrollPosition } from "./thread-feed-scroll-position";
@@ -415,9 +416,10 @@ export interface ThreadFeedProps {
   readonly listRef: RefObject<LegendListRef | null>;
   readonly freeze: SharedValue<boolean>;
   readonly anchorMessageId: MessageId | null;
-  /** A message to scroll to once it is in the feed; see `onJumpedToMessage`. */
-  readonly jumpToMessageId?: MessageId | null;
-  readonly onJumpedToMessage?: () => void;
+  readonly jumpToEntryId?: string | null;
+  readonly onJumpedToEntry?: () => void;
+  readonly jumpViewOffset?: number;
+  readonly findEntryId?: string;
   readonly contentInsetEndAdjustment: SharedValue<number>;
   readonly keyboardOffset: number;
   readonly sendingWithKeyboard?: boolean;
@@ -3886,6 +3888,7 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
   const openSetupDetails = () => setSetupDetailsThreadId(props.threadId);
   const listAppearanceData = {
     gt,
+    findEntryId: props.findEntryId,
     setupDetailsOpen,
     disclosureLayout,
     reduceMotion,
@@ -3932,7 +3935,7 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
     if (
       settling &&
       ready &&
-      (state.distanceFromEnd <= 2 || !state.isFollowingEnd || props.jumpToMessageId)
+      (state.distanceFromEnd <= 2 || !state.isFollowingEnd || props.jumpToEntryId)
     ) {
       setLandedListKey(feedThreadKey);
     }
@@ -3977,10 +3980,13 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
   // Opening at a message: once the filled list has loaded, the render that sees
   // the jump unfolds a run hiding the message and stops following the end, so
   // the committed list holds the target row with end maintenance off.
-  const { jumpToMessageId } = props;
-  const jumpReady = !!jumpToMessageId && loadedListKey === feedThreadKey;
-  if (jumpReady && revealedMessageId !== jumpToMessageId) {
-    setInteractionState((current) => ({ ...current, revealedMessageId: jumpToMessageId }));
+  const { jumpToEntryId } = props;
+  const jumpReady = !!jumpToEntryId && loadedListKey === feedThreadKey;
+  const jumpEntry = jumpReady
+    ? props.feed.find((entry) => matchesThreadFindEntry(entry, jumpToEntryId))
+    : undefined;
+  if (jumpEntry?.type === "message" && revealedMessageId !== jumpEntry.message.id) {
+    setInteractionState((current) => ({ ...current, revealedMessageId: jumpEntry.message.id }));
   }
   const [appendPendingTurn] = useState(createPendingTurnAppender);
   const presentedFeed = appendGuestPendingMessages(
@@ -3994,10 +4000,17 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
   );
   const pendingFoldMessageId =
     presentedFeed.findLast((entry) => entry.type === "pending-fold")?.messageId ?? null;
+  const jumpIndex = jumpReady
+    ? presentedFeed.findIndex(
+        (entry) =>
+          entry.type !== "pending-fold" &&
+          entry.type !== "guest-pending" &&
+          matchesThreadFindEntry(entry, jumpToEntryId),
+      )
+    : null;
   const jumpRunId =
-    jumpReady &&
-    !presentedFeed.some((entry) => entry.type === "message" && entry.id === jumpToMessageId)
-      ? messageFoldRunId(props.feed, jumpToMessageId, presentedFeed)
+    jumpIndex === -1 && jumpEntry?.type === "message"
+      ? messageFoldRunId(props.feed, jumpEntry.id, presentedFeed)
       : null;
   if (jumpRunId && !expandedTurnIds.has(jumpRunId)) {
     setInteractionState((current) => ({
@@ -4031,17 +4044,22 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
     const bottom = contentInsetEndAdjustment.get();
     if (list && bottom > 0) list.reportContentInset({ bottom });
   };
-  const jumpIndex = jumpReady
-    ? presentedFeed.findIndex((entry) => entry.type === "message" && entry.id === jumpToMessageId)
-    : null;
   const landJump = useEffectEvent((index: number) => {
     const list = listRef.current;
     if (!list) return;
     let cancelled = false;
     const positioning =
-      index === -1 ? undefined : list.scrollToIndex({ index, viewPosition: 0.2, animated: false });
+      index === -1
+        ? undefined
+        : list.scrollToIndex({
+            index,
+            ...(props.jumpViewOffset === undefined
+              ? { viewPosition: 0.2 }
+              : { viewOffset: props.jumpViewOffset }),
+            animated: false,
+          });
     void Promise.resolve(positioning).then(() => {
-      if (!cancelled && listRef.current === list) props.onJumpedToMessage?.();
+      if (!cancelled && listRef.current === list) props.onJumpedToEntry?.();
     });
     return () => {
       cancelled = true;
@@ -4051,8 +4069,8 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- scrolls the native list to the jump target after the commit that rendered its row
   useEffect(() => {
     if (jumpIndex !== null) return landJump(jumpIndex);
-    // oxlint-disable-next-line react/exhaustive-effect-dependencies -- Jumping to a different message whose row index is unchanged must still land the jump.
-  }, [jumpToMessageId, jumpIndex]);
+    // oxlint-disable-next-line react/exhaustive-effect-dependencies -- A different entry at the same index is a new jump.
+  }, [jumpToEntryId, jumpIndex, props.jumpViewOffset]);
 
   const handleViewportLayout = (event: LayoutChangeEvent) => {
     const nextWidth = Math.round(event.nativeEvent.layout.width);
@@ -4339,6 +4357,15 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
       index={info.index}
       layout={disclosureLayout}
     >
+      {props.findEntryId !== undefined &&
+      info.item.type !== "pending-fold" &&
+      info.item.type !== "guest-pending" &&
+      matchesThreadFindEntry(info.item, props.findEntryId) ? (
+        <View
+          pointerEvents="none"
+          className="absolute inset-0 rounded-xl border border-primary bg-primary/10"
+        />
+      ) : null}
       <MessageImageGalleryScope
         entry={info.item}
         environmentId={props.environmentId}

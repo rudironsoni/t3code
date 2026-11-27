@@ -5796,5 +5796,10 @@
   "e4e91d155cb6a9b4": "Schlichte Seitenleiste (nach Projekt gruppieren)",
   "3a678332fc7142f7": "Threads in der Seitenleiste in Projektordnern gruppieren. Angeheftete Threads bleiben oben, Zurückgestellte und Erledigte bleiben unter den Ordnern.",
   "ac1e5c94d1ad3c6a": "Zweizeilige Ordnerzeilen",
-  "f079556d67367fe7": "Ordner-Threads zweizeilig anzeigen: den Titel, darunter Branch, Pull Request und Agent."
+  "f079556d67367fe7": "Ordner-Threads zweizeilig anzeigen: den Titel, darunter Branch, Pull Request und Agent.",
+  "c4e9b5a68368e9e8": "Keine Treffer",
+  "9a1dafe07b8ce33d": "{current} von {total}",
+  "0d8761c57796fb94": "Im Thread suchen",
+  "f67b82db6ff66321": "Vorheriger Treffer",
+  "bac07cd397c7d1a8": "Nächster Treffer"
 }

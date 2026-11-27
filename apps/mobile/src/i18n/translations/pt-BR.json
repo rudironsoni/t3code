@@ -5790,5 +5790,10 @@
   "e4e91d155cb6a9b4": "Barra lateral sem graça (agrupar por projeto)",
   "3a678332fc7142f7": "Agrupa as threads da barra lateral em pastas de projeto. As threads fixadas ficam no topo, e Adiadas e Concluídas ficam abaixo das pastas.",
   "ac1e5c94d1ad3c6a": "Linhas de pasta em duas linhas",
-  "f079556d67367fe7": "Mostra as threads das pastas em duas linhas: o título e, abaixo, o branch, o pull request e o agente."
+  "f079556d67367fe7": "Mostra as threads das pastas em duas linhas: o título e, abaixo, o branch, o pull request e o agente.",
+  "c4e9b5a68368e9e8": "Nenhuma correspondência",
+  "9a1dafe07b8ce33d": "{current} de {total}",
+  "0d8761c57796fb94": "Localizar na thread",
+  "f67b82db6ff66321": "Resultado anterior",
+  "bac07cd397c7d1a8": "Próximo resultado"
 }
