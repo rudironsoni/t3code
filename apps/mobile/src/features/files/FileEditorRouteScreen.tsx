@@ -15,7 +15,7 @@ import { LoadingScreen } from "../../components/LoadingScreen";
 import { AppBar } from "../../components/ui/AppBar";
 import * as Dialog from "../../components/ui/Dialog";
 import { ScreenContent } from "../../components/ui/ScreenContent";
-import { useContentTopInset } from "../../components/ui/useBarInset";
+import { useBarOverlap } from "../../components/ui/useBarInset";
 import { projectEnvironment } from "../../state/projects";
 import { formatEnvironmentQueryError, useEnvironmentQuery } from "../../state/query";
 import { useAtomCommand } from "../../state/use-atom-command";
@@ -38,13 +38,14 @@ export function FileEditorRouteScreen({ route }: StaticScreenProps<FileEditorPar
   const gt = useGT();
   const resolve = useMessages();
   const registry = useContext(RegistryContext);
-  const topInset = useContentTopInset();
+  const topInset = useBarOverlap();
   const { environmentId, cwd, relativePath } = route.params;
   const canWrite = useAtomValue(projectEnvironment.writeFile.permissionAtom(environmentId));
   const fileAtom = projectEnvironment.readFile({ environmentId, input: { cwd, relativePath } });
   const file = useEnvironmentQuery(fileAtom);
   const write = useAtomCommand(projectEnvironment.writeFile, { reportFailure: false });
   const [draft, setDraft] = useState<{ original: string; text: string } | null>(null);
+  const [hasFocused, setHasFocused] = useState(false);
   const [saving, setSaving] = useState(false);
   const inFlight = useRef(false);
   const saved = useRef(false);
@@ -124,9 +125,9 @@ export function FileEditorRouteScreen({ route }: StaticScreenProps<FileEditorPar
           automaticOffset
           behavior="padding"
           className="flex-1"
-          style={{ paddingTop: topInset }}
+          style={{ paddingTop: topInset + 8 }}
         >
-          <SafeAreaView edges={["bottom", "left", "right"]} className="flex-1">
+          <SafeAreaView edges={["bottom", "left", "right"]} style={{ flex: 1 }}>
             {text !== null && original !== null ? (
               <TextInput
                 accessibilityLabel={gt("File contents")}
@@ -136,6 +137,8 @@ export function FileEditorRouteScreen({ route }: StaticScreenProps<FileEditorPar
                 editable={!saving}
                 multiline
                 onChangeText={(text) => setDraft({ original, text })}
+                onFocus={() => setHasFocused(true)}
+                selection={hasFocused ? undefined : { start: 0, end: 0 }}
                 spellCheck={false}
                 style={{ textAlignVertical: "top" }}
                 value={text}
