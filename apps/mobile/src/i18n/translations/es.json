@@ -5795,5 +5795,8 @@
   "9a1dafe07b8ce33d": "{current} de {total}",
   "0d8761c57796fb94": "Buscar en el hilo",
   "f67b82db6ff66321": "Coincidencia anterior",
-  "bac07cd397c7d1a8": "Coincidencia siguiente"
+  "bac07cd397c7d1a8": "Coincidencia siguiente",
+  "f8e0e886eabfa94c": "El archivo cambió en el equipo remoto. Copia tus cambios antes de volver a abrirlo.",
+  "bd52a233f685b517": "Contenido del archivo",
+  "698e21c263abd547": "Editar archivo"
 }

@@ -5795,5 +5795,8 @@
   "9a1dafe07b8ce33d": "{current} sur {total}",
   "0d8761c57796fb94": "Rechercher dans le fil",
   "f67b82db6ff66321": "Résultat précédent",
-  "bac07cd397c7d1a8": "Résultat suivant"
+  "bac07cd397c7d1a8": "Résultat suivant",
+  "f8e0e886eabfa94c": "Le fichier a changé sur la machine hôte. Copiez vos modifications avant de rouvrir le fichier.",
+  "bd52a233f685b517": "Contenu du fichier",
+  "698e21c263abd547": "Modifier le fichier"
 }

@@ -5803,5 +5803,8 @@
   "9a1dafe07b8ce33d": "{current} of {total}",
   "0d8761c57796fb94": "Find in thread",
   "f67b82db6ff66321": "Previous match",
-  "bac07cd397c7d1a8": "Next match"
+  "bac07cd397c7d1a8": "Next match",
+  "f8e0e886eabfa94c": "The file changed on the host. Copy your edits before reopening the file.",
+  "bd52a233f685b517": "File contents",
+  "698e21c263abd547": "Edit file"
 }

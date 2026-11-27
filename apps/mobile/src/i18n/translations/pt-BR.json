@@ -5795,5 +5795,8 @@
   "9a1dafe07b8ce33d": "{current} de {total}",
   "0d8761c57796fb94": "Localizar na thread",
   "f67b82db6ff66321": "Resultado anterior",
-  "bac07cd397c7d1a8": "Próximo resultado"
+  "bac07cd397c7d1a8": "Próximo resultado",
+  "f8e0e886eabfa94c": "O arquivo mudou na máquina host. Copie suas alterações antes de abrir o arquivo novamente.",
+  "bd52a233f685b517": "Conteúdo do arquivo",
+  "698e21c263abd547": "Editar arquivo"
 }

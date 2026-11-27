@@ -5801,5 +5801,8 @@
   "9a1dafe07b8ce33d": "{current} von {total}",
   "0d8761c57796fb94": "Im Thread suchen",
   "f67b82db6ff66321": "Vorheriger Treffer",
-  "bac07cd397c7d1a8": "Nächster Treffer"
+  "bac07cd397c7d1a8": "Nächster Treffer",
+  "f8e0e886eabfa94c": "Die Datei wurde auf dem Host geändert. Kopiere deine Änderungen, bevor du die Datei erneut öffnest.",
+  "bd52a233f685b517": "Dateiinhalt",
+  "698e21c263abd547": "Datei bearbeiten"
 }
