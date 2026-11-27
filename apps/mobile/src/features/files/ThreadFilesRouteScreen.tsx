@@ -63,6 +63,7 @@ import { useAppearancePreferences } from "../settings/appearance/AppearancePrefe
 import { ThreadRouteScreen } from "../threads/ThreadRouteScreen";
 import { FilePreviewLoading, FilePreviewNotice } from "./FilePreviewFeedback";
 import { FileMarkdownPreview } from "./FileMarkdownPreview";
+import { canEditWorkspaceFile } from "./FileEditorRouteScreen";
 import { FileTreeBrowser } from "./FileTreeBrowser";
 import { useFileTreeEntries } from "./useFileTreeEntries";
 import { preloadWorkspaceFileContents } from "./preload-workspace-file";
@@ -80,6 +81,7 @@ import {
   fileRoutePathSegments,
   resolveWorkspaceFilePath,
   resolveWorkspaceRelativeFilePath,
+  isAbsolutePath,
   isAudioPreviewFile,
   isMarkdownPreviewFile,
   isSvgImagePreviewFile,
@@ -681,6 +683,7 @@ export function ThreadFileScreen(props: ThreadFileRouteScreenProps) {
     messages,
   );
   const { canReadFiles } = fileAccess;
+  const canWriteFile = useAtomValue(projectEnvironment.writeFile.permissionAtom(environmentId));
   const targetPath =
     cwd !== null && relativePath !== null ? resolveWorkspaceFilePath(cwd, relativePath) : null;
   const metadata = useEnvironmentQuery(
@@ -772,7 +775,7 @@ export function ThreadFileScreen(props: ThreadFileRouteScreenProps) {
   });
   const assetPreviewUri = assetPreview._tag === "Success" ? assetPreview.url : null;
   // The server reads only UTF-8. Like web, a file it rejects is decoded from its downloaded bytes,
-  // which covers GBK/GB18030; mobile never saves, so the decoded text cannot rewrite the file.
+  // which covers GBK/GB18030. The decoded fallback is view-only.
   const needsDecodedText =
     isProjectReadFileError(fileQuery.failure) && fileQuery.failure.failure === "binary_file";
   const decodedTextResource = useMemo<AssetResource | null>(() => {
@@ -921,6 +924,28 @@ export function ThreadFileScreen(props: ThreadFileRouteScreenProps) {
     if (relativePath === null) return [];
     const canToggleMode = canPreview && !isImageFile && !isVideoFile && !isAudioFile && !isEpubFile;
     return [
+      canWriteFile &&
+      environmentId !== null &&
+      cwd !== null &&
+      !isAbsolutePath(relativePath) &&
+      !relativePath.startsWith("~/") &&
+      !relativePath.startsWith("~\\") &&
+      !isImageFile &&
+      !isVideoFile &&
+      !isAudioFile &&
+      !isPdfFile({ name: relativePath }) &&
+      canEditWorkspaceFile(fileQuery.successResult?.value)
+        ? ({
+            id: "edit",
+            title: gt("Edit file"),
+            icon: "pencil",
+            inline: false,
+            onPress: () =>
+              navigation.dispatch(
+                StackActions.push("FileEditor", { environmentId, cwd, relativePath }),
+              ),
+          } as const)
+        : null,
       canToggleMode
         ? ({
             id: "preview",

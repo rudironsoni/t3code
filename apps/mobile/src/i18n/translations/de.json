@@ -5718,5 +5718,8 @@
   "99451a5d2d40440f": "Zurückgezogen von {by}.",
   "3ee30a50b70fffab": "Zurückgezogen von {by}: {reason}",
   "201490988858b511": "zurückgezogen von {by}",
-  "46d614fa7b4bf1e5": "Workflow-Ausführungen"
+  "46d614fa7b4bf1e5": "Workflow-Ausführungen",
+  "f8e0e886eabfa94c": "Die Datei wurde auf dem Host geändert. Kopiere deine Änderungen, bevor du die Datei erneut öffnest.",
+  "bd52a233f685b517": "Dateiinhalt",
+  "698e21c263abd547": "Datei bearbeiten"
 }

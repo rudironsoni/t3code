@@ -5718,5 +5718,8 @@
   "99451a5d2d40440f": "Återkallad av {by}.",
   "3ee30a50b70fffab": "Återkallad av {by}: {reason}",
   "201490988858b511": "återkallad av {by}",
-  "46d614fa7b4bf1e5": "Arbetsflödeskörningar"
+  "46d614fa7b4bf1e5": "Arbetsflödeskörningar",
+  "f8e0e886eabfa94c": "Filen ändrades på värddatorn. Kopiera dina ändringar innan du öppnar filen igen.",
+  "bd52a233f685b517": "Filinnehåll",
+  "698e21c263abd547": "Redigera fil"
 }

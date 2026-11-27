@@ -5712,5 +5712,8 @@
   "99451a5d2d40440f": "Retirée par {by}.",
   "3ee30a50b70fffab": "Retirée par {by} : {reason}",
   "201490988858b511": "retirée par {by}",
-  "46d614fa7b4bf1e5": "Exécutions de workflow"
+  "46d614fa7b4bf1e5": "Exécutions de workflow",
+  "f8e0e886eabfa94c": "Le fichier a changé sur la machine hôte. Copiez vos modifications avant de rouvrir le fichier.",
+  "bd52a233f685b517": "Contenu du fichier",
+  "698e21c263abd547": "Modifier le fichier"
 }

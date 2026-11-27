@@ -5712,5 +5712,8 @@
   "99451a5d2d40440f": "Retirada por {by}.",
   "3ee30a50b70fffab": "Retirada por {by}: {reason}",
   "201490988858b511": "retirada por {by}",
-  "46d614fa7b4bf1e5": "Ejecuciones de flujos de trabajo"
+  "46d614fa7b4bf1e5": "Ejecuciones de flujos de trabajo",
+  "f8e0e886eabfa94c": "El archivo cambió en el equipo remoto. Copia tus cambios antes de volver a abrirlo.",
+  "bd52a233f685b517": "Contenido del archivo",
+  "698e21c263abd547": "Editar archivo"
 }
