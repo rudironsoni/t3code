@@ -19,7 +19,8 @@ Configure defaults in **Settings → Browser**:
 
 ## Pick elements, annotate, and record
 
-- **Element picker & annotations**: Pick elements or annotate regions on the page to attach them directly into the composer as inline context chips.
+- **Desktop**: Pick elements or annotate regions on the page to attach them directly into the composer as inline context chips.
+- **Mobile**: Take control of the streamed tab. Open the tab menu and choose **Inspect element**, then tap an element and choose **Attach element**. Use **Attach screenshot** to add the visible browser frame to the same draft.
 - **Screen recordings**: Record browser interactions directly from the tab toolbar. Configure **Browser recording frame rate**, **Show key presses in recordings**, and **Show mouse presses in recordings** in **Settings → Browser**.
 
 ## Agent browser access

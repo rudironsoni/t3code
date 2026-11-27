@@ -2870,6 +2870,45 @@ const realSelectPage = (html: string) =>
     return { page, viewer, click, output, evaluate };
   });
 
+it.live("inspects the controlling viewer's element without activating it", () =>
+  Effect.scoped(
+    Effect.gen(function* () {
+      const { page, viewer } = yield* realSelectPage("");
+      yield* Effect.promise(async () => {
+        await page.route("https://fixture.test/**", (route) =>
+          route.fulfill({
+            contentType: "text/html",
+            body: `<title>Fixture</title>
+              <button style="position:absolute;left:40px;top:60px;width:120px;height:30px"
+                onclick="this.remove()">Keep me</button>`,
+          }),
+        );
+        await page.goto("https://fixture.test/panel?private=value#section");
+      });
+      yield* viewer.input({ type: "inspect", id: "pick-1", x: 60, y: 75 });
+      const inspected = (yield* Queue.clear(viewer.output)).find(
+        (item) => item._tag === "inspection",
+      );
+      expect(inspected).toMatchObject({
+        _tag: "inspection",
+        id: "pick-1",
+        element: {
+          tagName: "button",
+          pageUrl: "https://fixture.test/panel",
+          pageTitle: "Fixture",
+          selector: "html > body:nth-child(2) > button:nth-child(1)",
+        },
+      });
+      expect(yield* Effect.promise(() => page.getByRole("button").count())).toBe(1);
+      yield* viewer.input({ type: "releaseControl" });
+      yield* viewer.input({ type: "inspect", id: "pick-2", x: 60, y: 75 });
+      expect((yield* Queue.clear(viewer.output)).some((item) => item._tag === "inspection")).toBe(
+        false,
+      );
+    }),
+  ).pipe(Effect.provide(layer)),
+);
+
 it.live("a click on a native select offers its options to the viewer and takes its choice", () =>
   Effect.scoped(
     Effect.gen(function* () {

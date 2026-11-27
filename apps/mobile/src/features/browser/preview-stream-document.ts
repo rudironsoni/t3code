@@ -1,11 +1,17 @@
 import type { DeviceHubAccess } from "@t3tools/client-runtime/device/hub-access";
-import type { PreviewStreamHostSetup } from "@t3tools/contracts";
+import type { PreviewStreamHostSetup, PreviewStreamInspection } from "@t3tools/contracts";
 import type {
   PreviewStreamControl,
   PreviewStreamDownload,
   PreviewStreamFileChooser,
+  PreviewStreamInput,
   PreviewStreamSelectMenu,
 } from "@t3tools/client-runtime/preview/server-browser-stream";
+
+export type PreviewViewerCommand =
+  | PreviewStreamInput
+  | { readonly type: "selectElement"; readonly id: string | null }
+  | { readonly type: "captureFrame" };
 
 export interface PreviewStreamConfiguration {
   readonly access: DeviceHubAccess;
@@ -39,6 +45,8 @@ export type PreviewStreamMessage =
   | ({ readonly type: "download" } & PreviewStreamDownload)
   | { readonly type: "fileChooser"; readonly chooser: PreviewStreamFileChooser | null }
   | { readonly type: "selectMenu"; readonly menu: PreviewStreamSelectMenu | null }
+  | ({ readonly type: "inspection" } & PreviewStreamInspection)
+  | { readonly type: "capture"; readonly dataUrl: string | null }
   | {
       readonly type: "pictureInPicture";
       readonly supported: boolean;

@@ -7,6 +7,7 @@ import {
   BUILT_IN_BROWSER_PROFILES,
   DEFAULT_BROWSER_PROFILE_ID,
   DEFAULT_BROWSER_RECORDING_FRAME_RATE,
+  ElementContextDetails,
   FILL_PREVIEW_VIEWPORT,
   findBrowserProfile,
   INCOGNITO_BROWSER_PROFILE_ID,
@@ -40,6 +41,8 @@ import {
   type PreviewAutomationUploadInput,
   type PreviewAutomationWaitForInput,
   PreviewClearProfileError,
+  PreviewStreamInspectInput,
+  type PreviewStreamInspection,
   type PreviewEvent,
   type PreviewNavStatus,
   type PreviewSessionSnapshot,
@@ -120,6 +123,45 @@ const RECORDING_SCREENCAST = { format: "jpeg", quality: 90, everyNthFrame: 1 } a
 const RECORDING_BINARY_EXPORT_MIN_BYTES = 8 * 1024 * 1024;
 const RECORDING_DOWNLOAD_TIMEOUT_MS = 5_000;
 const decodeViewportSetting = Schema.decodeUnknownSync(PreviewViewportSettingSchema);
+const decodeInspectedElement = Schema.decodeUnknownOption(ElementContextDetails);
+const decodeInspectInput = Schema.decodeUnknownOption(PreviewStreamInspectInput);
+
+async function inspectPageElement(session: CDPSession, x: number, y: number) {
+  const { frameTree } = await session.send("Page.getFrameTree");
+  const { executionContextId } = await session.send("Page.createIsolatedWorld", {
+    frameId: frameTree.frame.id,
+    worldName: "t3-preview-inspection",
+  });
+  const { result } = await session.send("Runtime.evaluate", {
+    contextId: executionContextId,
+    expression: `((x, y) => {
+      const element = document.elementFromPoint(x, y);
+      if (!element || !["http:", "https:"].includes(location.protocol)) return null;
+      const segments = [];
+      let current = element;
+      while (current && segments.length < 24) {
+        const tag = CSS.escape(current.localName);
+        const parent = current.parentElement;
+        const index = parent ? Array.prototype.indexOf.call(parent.children, current) + 1 : 0;
+        segments.unshift(index ? tag + ":nth-child(" + index + ")" : tag);
+        current = parent;
+      }
+      const selector = segments.join(" > ");
+      return {
+        pageUrl: (location.origin + location.pathname).slice(0, 2048),
+        pageTitle: document.title.slice(0, 2048) || null,
+        tagName: element.localName.slice(0, 255),
+        selector: current || selector.length > 2048 ? null : selector,
+        htmlPreview: "",
+        componentName: null,
+        source: null,
+        styles: "",
+      };
+    })(${x}, ${y})`,
+    returnByValue: true,
+  });
+  return Option.getOrNull(decodeInspectedElement(result.value));
+}
 const AGENT_CURSOR_MOVE_MS = 160;
 const AGENT_CURSOR_CLICK_LEAD_MS = 40;
 /** A dialog blocks page script, so a desktop size read gives up after this. */
@@ -311,6 +353,7 @@ export type ServerBrowserViewerOutput =
   | {
       readonly _tag: "control";
       readonly canOperate: boolean;
+      readonly supportsInspection: boolean;
       readonly controller: "agent" | "you" | "another-viewer" | "unclaimed";
       readonly generation: number;
       readonly dialog: {
@@ -325,6 +368,7 @@ export type ServerBrowserViewerOutput =
       readonly y: number;
       readonly editable: boolean;
     }
+  | ({ readonly _tag: "inspection" } & PreviewStreamInspection)
   | { readonly _tag: "clipboard"; readonly text: string }
   | {
       readonly _tag: "pointer";
@@ -839,6 +883,7 @@ const make = Effect.gen(function* () {
       viewer.push({
         _tag: "control",
         canOperate: viewer.canOperate,
+        supportsInspection: true,
         controller:
           tab.control.controller === viewer.id
             ? "you"
@@ -3556,6 +3601,19 @@ const make = Effect.gen(function* () {
           returnByValue: true,
         });
         viewer.push({ _tag: "probe", x, y, editable: result.result.value === true });
+        return;
+      }
+      case "inspect": {
+        const input = decodeInspectInput(message);
+        if (Option.isNone(input)) return;
+        const { id, x, y } = input.value;
+        const found = await runPromise(
+          Effect.promise(() => inspectPageElement(session, x, y).catch(() => null)).pipe(
+            Effect.timeoutOption("4 seconds"),
+            Effect.map(Option.getOrNull),
+          ),
+        );
+        viewer.push({ _tag: "inspection", id, element: found });
         return;
       }
     }

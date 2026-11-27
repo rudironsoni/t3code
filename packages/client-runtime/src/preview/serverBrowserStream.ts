@@ -2,9 +2,14 @@
 import { type DeviceHubAccess, withDeviceHubQuery } from "../device/hubAccess.ts";
 import {
   PREVIEW_STREAM_HOST_SETUP_CLOSE_CODE,
+  ElementContextDetails,
   type PreviewStreamHostSetup,
+  type PreviewStreamInspectInput,
+  type PreviewStreamInspection,
   type PreviewViewportSetting,
 } from "@t3tools/contracts";
+import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import { mFallback, msg } from "gt-i18n";
 import type { MFunctionType } from "gt-i18n/types";
 
@@ -19,6 +24,7 @@ export type PreviewStreamMouseButton = "none" | "left" | "middle" | "right";
 
 export interface PreviewStreamControl {
   readonly canOperate: boolean;
+  readonly supportsInspection?: boolean;
   readonly controller: "agent" | "you" | "another-viewer" | "unclaimed";
   readonly generation: number;
   readonly dialog: null | {
@@ -108,6 +114,7 @@ export type PreviewStreamInput =
   | { readonly type: "reload"; readonly ignoreCache?: boolean }
   | { readonly type: "stopLoading" }
   | { readonly type: "probe"; readonly x: number; readonly y: number }
+  | PreviewStreamInspectInput
   | { readonly type: "selectMenu"; readonly id: string; readonly index: number };
 
 export interface PreviewStreamDownload {
@@ -192,6 +199,8 @@ export interface PreviewStreamProbe {
   readonly editable: boolean;
 }
 
+const decodeInspectedElement = Schema.decodeUnknownOption(ElementContextDetails);
+
 export interface PreviewStreamPointer {
   readonly phase: "move" | "click";
   readonly x: number;
@@ -225,6 +234,7 @@ export interface PreviewStreamEvents {
   readonly onFrame: (jpeg: ArrayBuffer) => void;
   readonly onViewport: (viewport: PreviewStreamViewport) => void;
   readonly onProbe?: (probe: PreviewStreamProbe) => void;
+  readonly onInspection?: (inspection: PreviewStreamInspection) => void;
   readonly onPointer?: (pointer: PreviewStreamPointer) => void;
   readonly onControl?: (control: PreviewStreamControl) => void;
   readonly onClipboard?: (text: string) => void;
@@ -314,6 +324,7 @@ export function createPreviewStreamClient(
         height,
         editable,
         canOperate,
+        supportsInspection,
         controller,
         generation,
         dialog,
@@ -328,6 +339,7 @@ export function createPreviewStreamClient(
         tabId,
         options,
         selectedIndex,
+        element,
       } = message as Record<string, unknown>;
       if (
         type === "fileChooser" &&
@@ -393,6 +405,8 @@ export function createPreviewStreamClient(
         typeof editable === "boolean"
       ) {
         events.onProbe?.({ x, y, editable });
+      } else if (type === "inspection" && typeof id === "string") {
+        events.onInspection?.({ id, element: Option.getOrNull(decodeInspectedElement(element)) });
       } else if (
         type === "control" &&
         typeof canOperate === "boolean" &&
@@ -405,6 +419,7 @@ export function createPreviewStreamClient(
       ) {
         const nextControl: PreviewStreamControl = {
           canOperate,
+          ...(supportsInspection === true ? { supportsInspection } : {}),
           controller,
           generation,
           dialog,

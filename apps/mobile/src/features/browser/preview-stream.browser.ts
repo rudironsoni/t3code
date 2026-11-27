@@ -9,7 +9,11 @@ import {
   type PreviewStreamViewport,
 } from "@t3tools/client-runtime/preview/server-browser-stream";
 
-import type { PreviewStreamConfiguration, PreviewStreamMessage } from "./preview-stream-document";
+import type {
+  PreviewStreamConfiguration,
+  PreviewStreamMessage,
+  PreviewViewerCommand,
+} from "./preview-stream-document";
 
 declare global {
   interface Window {
@@ -29,6 +33,7 @@ const mouseButton = (button: number): MouseInput["button"] =>
 
 const RESIZE_DEBOUNCE_MS = 150;
 const TAP_SLOP_PX = 8;
+const INSPECTION_TIMEOUT_MS = 5_000;
 const MULTI_CLICK_MS = 500;
 const MULTI_CLICK_SLOP_PX = 4;
 const WHEEL_LINE_PX = 16;
@@ -45,7 +50,7 @@ const AGENT_CURSOR_SVG =
 
 interface Viewer {
   readonly stop: () => void;
-  readonly command: (input: PreviewStreamInput) => void;
+  readonly command: (input: PreviewViewerCommand) => void;
   readonly togglePictureInPicture: () => void;
 }
 
@@ -56,7 +61,7 @@ export function stop() {
   activeViewer = null;
 }
 
-export function command(input: PreviewStreamInput) {
+export function command(input: PreviewViewerCommand) {
   activeViewer?.command(input);
 }
 
@@ -103,6 +108,16 @@ export function start(configuration: PreviewStreamConfiguration) {
   let mouseFrame: number | null = null;
   let pendingMouse: MouseInput | null = null;
   let mouseButtons = 0;
+  let inspection: {
+    readonly id: string;
+    pointer?: PointerEvent;
+    timeout?: ReturnType<typeof setTimeout>;
+  } | null = null;
+  const cancelInspection = () => {
+    if (inspection?.timeout !== undefined) clearTimeout(inspection.timeout);
+    inspection = null;
+    canvas.style.cursor = "";
+  };
   const mouseClicks = { left: 1, middle: 1, right: 1, none: 1 };
   let probe: {
     readonly x: number;
@@ -142,6 +157,7 @@ export function start(configuration: PreviewStreamConfiguration) {
   });
   const send = (message: PreviewStreamInput) => client?.send(message) ?? false;
   const clearInput = () => {
+    cancelInspection();
     if (wheelFrame !== null) cancelAnimationFrame(wheelFrame);
     if (mouseFrame !== null) cancelAnimationFrame(mouseFrame);
     wheelFrame = mouseFrame = null;
@@ -177,6 +193,11 @@ export function start(configuration: PreviewStreamConfiguration) {
         onDownload: (download) => post({ type: "download", ...download }),
         onFileChooser: (chooser) => post({ type: "fileChooser", chooser }),
         onSelectMenu: (menu) => post({ type: "selectMenu", menu }),
+        onInspection: (result) => {
+          if (inspection?.id !== result.id) return;
+          cancelInspection();
+          post({ type: "inspection", ...result });
+        },
         onViewport: (page) => {
           if (viewport?.width === page.width && viewport.height === page.height) return;
           viewport = page;
@@ -378,6 +399,13 @@ export function start(configuration: PreviewStreamConfiguration) {
     if (control?.controller !== "you") return;
     if (!event.isPrimary) return;
     event.preventDefault();
+    if (inspection) {
+      if (inspection.timeout === undefined && event.button === 0) {
+        inspection.pointer = event;
+        canvas.setPointerCapture(event.pointerId);
+      }
+      return;
+    }
     if (event.pointerType !== "touch") {
       const point = pagePoint(event.clientX, event.clientY, false);
       if (!point) return;
@@ -413,7 +441,7 @@ export function start(configuration: PreviewStreamConfiguration) {
     send({ type: "probe", x: point.x, y: point.y });
   };
   const onPointerMove = (event: PointerEvent) => {
-    if (control?.controller !== "you") return;
+    if (control?.controller !== "you" || inspection) return;
     if (event.pointerType !== "touch") {
       const point = pagePoint(event.clientX, event.clientY, mouseButtons !== 0);
       if (!point) return;
@@ -479,6 +507,28 @@ export function start(configuration: PreviewStreamConfiguration) {
   };
   const onPointerEnd = (event: PointerEvent) => {
     const cancelled = event.type === "pointercancel";
+    if (inspection) {
+      const { id, pointer } = inspection;
+      if (pointer?.pointerId !== event.pointerId) return;
+      delete inspection.pointer;
+      if (
+        cancelled ||
+        Math.hypot(event.clientX - pointer.clientX, event.clientY - pointer.clientY) >= TAP_SLOP_PX
+      )
+        return;
+      const point = pagePoint(event.clientX, event.clientY, false);
+      if (!point) return;
+      const fail = () => {
+        cancelInspection();
+        post({ type: "inspection", id, element: null });
+      };
+      if (send({ type: "inspect", id, x: point.x, y: point.y })) {
+        inspection.timeout = setTimeout(fail, INSPECTION_TIMEOUT_MS);
+      } else {
+        fail();
+      }
+      return;
+    }
     if (event.pointerType !== "touch") {
       releaseMouse(event, cancelled);
       return;
@@ -508,6 +558,7 @@ export function start(configuration: PreviewStreamConfiguration) {
     const point = pagePoint(event.clientX, event.clientY, false);
     if (!point) return;
     event.preventDefault();
+    if (inspection) return;
     const unit =
       event.deltaMode === WheelEvent.DOM_DELTA_LINE
         ? WHEEL_LINE_PX
@@ -695,12 +746,31 @@ export function start(configuration: PreviewStreamConfiguration) {
       if (mouseFrame !== null) cancelAnimationFrame(mouseFrame);
       if (agentCursorTimer !== null) clearTimeout(agentCursorTimer);
       painter.stop();
+      cancelInspection();
       client?.stop();
       client = null;
       track?.stop();
       if (video) video.srcObject = null;
     },
     command: (message) => {
+      if (message.type === "selectElement") {
+        cancelInspection();
+        if (message.id !== null && control?.controller === "you" && control.supportsInspection) {
+          inspection = { id: message.id };
+          canvas.style.cursor = "crosshair";
+          probe = probeCache = touch = lastTap = null;
+          input.blur();
+        }
+        return;
+      }
+      if (message.type === "captureFrame") {
+        post({
+          type: "capture",
+          dataUrl:
+            streaming && control?.controller === "you" ? canvas.toDataURL("image/jpeg") : null,
+        });
+        return;
+      }
       send(message);
     },
     togglePictureInPicture,

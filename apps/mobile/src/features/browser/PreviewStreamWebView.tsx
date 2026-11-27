@@ -12,7 +12,11 @@ import {
   type PreviewStreamInput,
   type PreviewStreamSelectMenu,
 } from "@t3tools/client-runtime/preview/server-browser-stream";
-import type { EnvironmentId, PreviewStreamHostSetup } from "@t3tools/contracts";
+import type {
+  ElementContextDetails,
+  EnvironmentId,
+  PreviewStreamHostSetup,
+} from "@t3tools/contracts";
 import {
   useEffectEvent,
   useImperativeHandle,
@@ -34,6 +38,7 @@ import { PdfPreview } from "../../components/PdfPreview";
 import { m } from "../../i18n/messages";
 import { downloadAndShareAttachment } from "../../lib/attachmentDownload";
 import { beginForegroundHandoff } from "../../lib/foreground-handoff";
+import { uuidv4 } from "../../lib/uuid";
 import { usePreviewStreamAccess } from "../../state/preview";
 import { previewPromptText } from "./previewPromptText";
 
@@ -41,11 +46,14 @@ import {
   previewStreamDocument,
   previewStreamMessage,
   type PreviewStreamConfiguration,
+  type PreviewViewerCommand,
 } from "./preview-stream-document";
 
 export interface PreviewStreamRef {
   readonly command: (input: PreviewStreamInput) => void;
   readonly paste: () => void;
+  readonly inspect: () => void;
+  readonly capture: () => void;
   readonly togglePictureInPicture: () => void;
 }
 
@@ -64,6 +72,8 @@ type NativeStreamBridge = {
   /** The direction a drag scrolls the page, every few dozen pixels of it. */
   readonly onScrollDirection?: (direction: "up" | "down") => void;
   readonly onControl?: (control: PreviewStreamControl | null) => void;
+  readonly onAttachElement?: (element: ElementContextDetails) => void;
+  readonly onCapture?: (dataUrl: string | null) => void;
   readonly onPictureInPicture?: (state: PreviewPictureInPictureState, detail?: string) => void;
   /** True while frames show, so commands reach the page. */
   readonly onStreamingChange?: (streaming: boolean) => void;
@@ -238,6 +248,8 @@ function PreviewStreamDocumentView({
   onViewport,
   onScrollDirection,
   onControl,
+  onAttachElement,
+  onCapture,
   onPictureInPicture,
   onStreamingChange,
   onRetry,
@@ -278,10 +290,23 @@ function PreviewStreamDocumentView({
     );
   };
   const [selectMenu, setSelectMenu] = useState<PreviewStreamSelectMenu | null>(null);
-  const command = (input: PreviewStreamInput) =>
+  const [inspection, setInspection] = useState<{
+    readonly id: string;
+    readonly element?: ElementContextDetails | null;
+  } | null>(null);
+  const viewerCommand = (input: PreviewViewerCommand) =>
     webView.current?.injectJavaScript(
       `window.T3PreviewStream?.command(${JSON.stringify(input)}); true;`,
     );
+  const cancelInspection = () => {
+    if (inspection === null) return;
+    setInspection(null);
+    viewerCommand({ type: "selectElement", id: null });
+  };
+  const command = (input: PreviewStreamInput) => {
+    cancelInspection();
+    viewerCommand(input);
+  };
   // Reads here rather than in the screen: a tab switch during the iOS paste prompt unmounts
   // this view and nulls its WebView ref, so the text can never type into another tab.
   const paste = () =>
@@ -305,6 +330,7 @@ function PreviewStreamDocumentView({
     setControl(null);
     setFileChooser(null);
     setSelectMenu(null);
+    setInspection(null);
     onControl?.(null);
     setError(message);
     setStatus("error");
@@ -341,6 +367,23 @@ function PreviewStreamDocumentView({
   useImperativeHandle(ref, () => ({
     command,
     paste,
+    inspect: () => {
+      if (
+        status !== "streaming" ||
+        control?.controller !== "you" ||
+        !control.supportsInspection ||
+        control.dialog
+      )
+        return;
+      const id = uuidv4();
+      setInspection({ id });
+      viewerCommand({ type: "selectElement", id });
+    },
+    capture: () => {
+      if (status !== "streaming" || control?.controller !== "you" || control.dialog) return;
+      cancelInspection();
+      viewerCommand({ type: "captureFrame" });
+    },
     togglePictureInPicture: () =>
       webView.current?.injectJavaScript("window.T3PreviewStream?.pictureInPicture(); true;"),
   }));
@@ -396,6 +439,7 @@ function PreviewStreamDocumentView({
               case "control": {
                 setControl(message);
                 if (message.controller !== "you") setSelectMenu(null);
+                if (message.controller !== "you" || message.dialog) cancelInspection();
                 const previousDialog = dialogRef.current;
                 dialogRef.current = message.dialog;
                 setPromptText((draft) => previewPromptText(previousDialog, message.dialog, draft));
@@ -437,6 +481,16 @@ function PreviewStreamDocumentView({
               case "selectMenu":
                 setSelectMenu(message.menu);
                 return;
+              case "inspection":
+                setInspection((current) =>
+                  current?.id === message.id
+                    ? { id: message.id, element: message.element }
+                    : current,
+                );
+                return;
+              case "capture":
+                onCapture?.(message.dataUrl);
+                return;
               case "pictureInPicture":
                 onPictureInPicture?.(message, message.detail);
                 return;
@@ -451,6 +505,7 @@ function PreviewStreamDocumentView({
                   // Dialogs may have closed and reopened while this viewer was disconnected.
                   dialogRef.current = null;
                   setControl(null);
+                  setInspection(null);
                   onControl?.(null);
                 }
                 onStreamingChange?.(message.status === "streaming");
@@ -464,6 +519,34 @@ function PreviewStreamDocumentView({
           </View>
         ) : null}
       </View>
+      {onAttachElement && inspection && control?.controller === "you" && !control.dialog ? (
+        <View className="absolute inset-x-3 bottom-3 gap-2 rounded-xl border border-secondary-border bg-secondary p-3">
+          <AppText
+            accessibilityLiveRegion="polite"
+            className="text-sm text-secondary-foreground"
+            numberOfLines={2}
+          >
+            {inspection.element === undefined
+              ? gt("Tap an element to inspect it.")
+              : inspection.element === null
+                ? gt("Could not inspect this element.")
+                : gt("Selected {element}", { element: inspection.element.tagName })}
+          </AppText>
+          <View className="flex-row justify-end gap-2">
+            <Button label={gt("Cancel")} tone="text" onPress={cancelInspection} />
+            {inspection.element ? (
+              <Button
+                label={gt("Attach element")}
+                tone="secondary"
+                onPress={() => {
+                  const element = inspection.element;
+                  if (element) onAttachElement(element);
+                }}
+              />
+            ) : null}
+          </View>
+        </View>
+      ) : null}
       {!compact && fileChooser && control?.controller === "you" ? (
         <View className="absolute inset-x-3 top-16 gap-3 rounded-xl border border-secondary-border bg-secondary p-4">
           <AppText className="text-sm text-secondary-foreground">
