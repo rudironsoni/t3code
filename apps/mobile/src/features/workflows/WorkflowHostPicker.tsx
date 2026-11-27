@@ -1,6 +1,6 @@
 import type { EnvironmentId } from "@t3tools/contracts";
 import { useGT } from "gt-react-native";
-import { Pressable, ScrollView } from "react-native";
+import { Pressable, View } from "react-native";
 
 import { Chip } from "../../components/ui/Chip";
 import { EmptyState } from "../../components/ui/EmptyState";
@@ -17,11 +17,7 @@ export function WorkflowHostPicker(props: {
   )
     return null;
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerClassName="gap-2 px-5 py-2"
-    >
+    <View className="flex-row flex-wrap gap-x-2 px-5 py-2">
       {props.environments.map((environment) => (
         <WorkflowPickerChip
           key={environment.environmentId}
@@ -30,7 +26,7 @@ export function WorkflowHostPicker(props: {
           onPress={() => props.onSelect(environment.environmentId)}
         />
       ))}
-    </ScrollView>
+    </View>
   );
 }
 
