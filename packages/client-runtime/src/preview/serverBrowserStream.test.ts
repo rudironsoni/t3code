@@ -108,6 +108,43 @@ describe("preview stream control", () => {
     client.stop();
   });
 
+  it("advertises inspection and decodes element details for the requested pick", () => {
+    const onInspection = vi.fn();
+    const onControl = vi.fn();
+    const client = createPreviewStreamClient(target, {
+      onFrame: vi.fn(),
+      onControl,
+      onInspection,
+      onViewport: vi.fn(),
+      onConnectedChange: vi.fn(),
+      onUnauthorized: vi.fn(),
+    });
+    const socket = FakeSocket.current;
+    const owned = { ...agent, controller: "you" as const, supportsInspection: true };
+    socket.control(owned);
+    expect(onControl).toHaveBeenLastCalledWith(owned);
+    const request = { type: "inspect", id: "pick-1", x: 60, y: 75 } as const;
+    expect(client.send(request)).toBe(true);
+    expect(socket.sent).toEqual([JSON.stringify(request)]);
+    const element = {
+      pageUrl: "https://fixture.test/panel",
+      pageTitle: "Fixture",
+      tagName: "button",
+      selector: "button",
+      htmlPreview: "",
+      componentName: null,
+      source: null,
+      styles: "",
+    };
+    socket.message(JSON.stringify({ type: "inspection", id: request.id, element }));
+    expect(onInspection).toHaveBeenLastCalledWith({ id: request.id, element });
+    socket.message(
+      JSON.stringify({ type: "inspection", id: request.id, element: { tagName: 42 } }),
+    );
+    expect(onInspection).toHaveBeenLastCalledWith({ id: request.id, element: null });
+    client.stop();
+  });
+
   it("withdraws an offered file picker when the stream drops or stops", () => {
     const onFileChooser = vi.fn();
     const events = {

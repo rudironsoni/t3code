@@ -72,6 +72,7 @@ const mutations = [
   { type: "reload" },
   { type: "stopLoading" },
   { type: "probe", x: 10, y: 10 },
+  { type: "inspect", id: "pick-1", x: 10, y: 10 },
   { type: "takeControl" },
   { type: "releaseControl" },
   { type: "dialog", accept: true },

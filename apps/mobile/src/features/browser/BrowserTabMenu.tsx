@@ -56,12 +56,16 @@ export function BrowserTabMenu({
   environmentId,
   tab,
   streaming,
+  onInspect,
+  onCapture,
   onPaste,
   onReleaseControl,
 }: {
   readonly environmentId: EnvironmentId;
   readonly tab: PreviewSessionSnapshot;
   readonly streaming: boolean;
+  readonly onInspect?: () => void;
+  readonly onCapture?: () => void;
   readonly onPaste?: () => void;
   readonly onReleaseControl?: () => void;
 }) {
@@ -101,6 +105,10 @@ export function BrowserTabMenu({
     : [];
   const actions: MenuAction[] = [
     ...openOnDevice,
+    ...(onInspect
+      ? [{ id: "inspect", title: gt("Inspect element"), image: "cursorarrow.click" }]
+      : []),
+    ...(onCapture ? [{ id: "capture", title: gt("Attach screenshot"), image: "camera" }] : []),
     ...(onPaste
       ? [{ id: "paste", title: gt("Paste", { $context: "verb" }), image: "doc.on.clipboard" }]
       : []),
@@ -166,6 +174,8 @@ export function BrowserTabMenu({
       return openLocalPreview({ environmentId, threadId: tab.threadId }, deviceUrl);
     }
     if (id === "paste") return onPaste?.();
+    if (id === "inspect") return onInspect?.();
+    if (id === "capture") return onCapture?.();
     if (id === "release-control") return onReleaseControl?.();
     if (id === "hard-reload") return void run({ hardReload: true });
     if (id === "zoom:in") return void run({ zoomFactor: zoomTo(1) });

@@ -2,7 +2,16 @@ import { SheetHeader } from "../../components/ui/SheetHeader";
 import { AppActivityIndicator } from "../../components/ui/AppActivityIndicator";
 import * as Dialog from "../../components/ui/Dialog";
 import { useIsFocused, useNavigation, type StaticScreenProps } from "@react-navigation/native";
-import { EnvironmentId, ThreadId } from "@t3tools/contracts";
+import { scopedThreadKey } from "@t3tools/client-runtime/environment";
+import type { PreviewStreamControl } from "@t3tools/client-runtime/preview/server-browser-stream";
+import {
+  ComposerContextId,
+  EnvironmentId,
+  PROVIDER_SEND_TURN_MAX_IMAGE_BYTES,
+  ThreadId,
+  type ElementContextDetails,
+} from "@t3tools/contracts";
+import { formatComposerContextReference } from "@t3tools/shared/composerContextReferences";
 import { normalizePreviewUrl, previewPdfAssetUrl } from "@t3tools/shared/preview";
 import * as Option from "effect/Option";
 import { msg, useGT, useMessages } from "gt-react-native";
@@ -15,9 +24,16 @@ import { Menu } from "../../components/ui/Menu";
 import { useContentTopInset } from "../../components/ui/useBarInset";
 import { m } from "../../i18n/messages";
 import { useAppForeground } from "../../lib/appState";
+import { estimateBase64ByteSize } from "../../lib/base64";
+import { uuidv4 } from "../../lib/uuid";
 
 import { useThreadServerBrowserTabs } from "../../state/preview";
 import { usePreparedConnection } from "../../state/session";
+import {
+  appendComposerDraftAttachments,
+  getComposerDraftSnapshot,
+  insertComposerDraftContext,
+} from "../../state/use-composer-drafts";
 import { useAppearancePreferences } from "../settings/appearance/AppearancePreferencesProvider";
 import { BrowserChrome } from "./BrowserBar";
 import { BrowserTabMenu } from "./BrowserTabMenu";
@@ -92,7 +108,7 @@ function BrowserPreviewScreen({
   const [selectedTabId, setSelectedTabId] = useState(initialTabId);
   const [pictureInPicture, setPictureInPicture] = useState(NO_PICTURE_IN_PICTURE);
   const [streaming, setStreaming] = useState(false);
-  const [canControl, setCanControl] = useState(false);
+  const [control, setControl] = useState<PreviewStreamControl | null>(null);
   const streamRef = useRef<PreviewStreamRef>(null);
   const { tabs, loaded } = useThreadServerBrowserTabs({ environmentId, threadId, enabled: true });
   const tab = tabs.find((entry) => entry.tabId === selectedTabId) ?? latestBrowserTab(tabs);
@@ -117,7 +133,68 @@ function BrowserPreviewScreen({
   };
   const live = (focused && foreground) || pictureInPicture.active;
 
-  const ready = streaming && canControl;
+  const ready = streaming && control?.controller === "you";
+  const canCapture = ready && pdfUri === null && !pictureInPicture.active && !control?.dialog;
+  const draftKey = scopedThreadKey({ environmentId, threadId });
+  const attachElement = (element: ElementContextDetails) => {
+    const record = {
+      ...element,
+      version: 1 as const,
+      kind: "element" as const,
+      contextId: ComposerContextId.make(uuidv4()),
+      label: element.tagName.slice(0, 200),
+    };
+    const { text } = getComposerDraftSnapshot(draftKey);
+    if (
+      !insertComposerDraftContext(
+        draftKey,
+        {
+          text: formatComposerContextReference(record),
+          context: { version: 1, records: [record] },
+        },
+        { text, start: text.length, end: text.length },
+      )
+    ) {
+      Dialog.alert(
+        m(msg("Too many context items")),
+        m(msg("Remove some context from the draft and try again.")),
+      );
+      return;
+    }
+    onClose();
+  };
+  const attachScreenshot = (dataUrl: string | null) => {
+    const prefix = "data:image/jpeg;base64,";
+    const sizeBytes =
+      typeof dataUrl === "string" && dataUrl.startsWith(prefix)
+        ? estimateBase64ByteSize(dataUrl.slice(prefix.length))
+        : 0;
+    if (dataUrl === null || sizeBytes <= 0 || sizeBytes > PROVIDER_SEND_TURN_MAX_IMAGE_BYTES) {
+      Dialog.alert(m(msg("Could not capture screenshot")));
+      return;
+    }
+    const { text } = getComposerDraftSnapshot(draftKey);
+    const rejected = appendComposerDraftAttachments(
+      draftKey,
+      [
+        {
+          id: uuidv4(),
+          type: "image",
+          name: "browser-screenshot.jpg",
+          mimeType: "image/jpeg",
+          sizeBytes,
+          dataUrl,
+          previewUri: dataUrl,
+        },
+      ],
+      { appendReference: true, insertion: { text, start: text.length, end: text.length } },
+    );
+    if (rejected > 0) {
+      Dialog.alert(m(msg("Too many attachments")));
+      return;
+    }
+    onClose();
+  };
   const command: PreviewStreamRef["command"] = (input) => streamRef.current?.command(input);
   const showPictureInPicture =
     // Android WebView cannot play video in picture in picture.
@@ -190,6 +267,12 @@ function BrowserPreviewScreen({
                   environmentId={environmentId}
                   tab={tab}
                   streaming={streaming}
+                  onInspect={
+                    canCapture && control?.supportsInspection
+                      ? () => streamRef.current?.inspect()
+                      : undefined
+                  }
+                  onCapture={canCapture ? () => streamRef.current?.capture() : undefined}
                   onPaste={ready ? () => streamRef.current?.paste() : undefined}
                   onReleaseControl={ready ? () => command({ type: "releaseControl" }) : undefined}
                 />
@@ -213,7 +296,9 @@ function BrowserPreviewScreen({
                 onPictureInPicture={onPictureInPicture}
                 onStreamingChange={setStreaming}
                 onScrollDirection={onScrollDirection}
-                onControl={(control) => setCanControl(control?.controller === "you")}
+                onControl={setControl}
+                onAttachElement={attachElement}
+                onCapture={attachScreenshot}
               />
             ) : (
               <View className="flex-1" />

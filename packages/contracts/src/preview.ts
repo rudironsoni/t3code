@@ -1,6 +1,7 @@
 import { Schema } from "effect";
 import { NonNegativeInt, PositiveInt, ThreadId, TrimmedNonEmptyString } from "./baseSchemas.ts";
 import { BROWSER_PROFILE_MAX_COUNT, BrowserProfile, BrowserProfileId } from "./browserProfile.ts";
+import type { ElementContextDetails } from "./composerContext.ts";
 
 export const PREVIEW_URL_MAX_LENGTH = 2_048;
 export const CONFIGURED_LOCAL_SERVER_URLS_MAX_ITEMS = 32;
@@ -147,6 +148,19 @@ export const PreviewStreamHostSetup = Schema.Struct({
 });
 export type PreviewStreamHostSetup = typeof PreviewStreamHostSetup.Type;
 export const PREVIEW_STREAM_HOST_SETUP_CLOSE_CODE = 4503;
+
+export const PreviewStreamInspectInput = Schema.Struct({
+  type: Schema.Literal("inspect"),
+  id: TrimmedNonEmptyString.check(Schema.isMaxLength(64)),
+  x: Schema.Finite,
+  y: Schema.Finite,
+});
+export type PreviewStreamInspectInput = typeof PreviewStreamInspectInput.Type;
+
+export interface PreviewStreamInspection {
+  readonly id: string;
+  readonly element: ElementContextDetails | null;
+}
 
 export const PreviewSessionSnapshot = Schema.Struct({
   threadId: TrimmedNonEmptyString,
