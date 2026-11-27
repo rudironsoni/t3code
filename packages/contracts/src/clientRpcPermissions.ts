@@ -20,6 +20,11 @@ import { WS_METHODS } from "./rpc.ts";
 
 /** Incremental client enforcement; the server still authorizes every request. */
 export const CLIENT_GUARDED_RPC_SCOPES = {
+  [WS_METHODS.providerInstallStart]: AuthProvidersManageScope,
+  [WS_METHODS.providerInstallCancel]: AuthProvidersManageScope,
+  [WS_METHODS.providerInstallRemove]: AuthProvidersManageScope,
+  [WS_METHODS.serverPrepareAcpRegistryAgent]: AuthProvidersManageScope,
+  [WS_METHODS.serverUninstallAcpRegistryManagedBinary]: AuthProvidersManageScope,
   [WS_METHODS.providerAuthRemoveMethod]: AuthProvidersManageScope,
   // An MCP sign-in stores a credential for the agent, as an account sign-in does.
   [WS_METHODS.providerMcpSignInStart]: AuthProvidersManageScope,

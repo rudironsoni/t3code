@@ -248,7 +248,7 @@ export function describeUnavailableModelSelection(
     : {
         title: m(msg("{provider} model unavailable", { provider: "Antigravity" })),
         detail: m(
-          msg("Set up {provider} on web or desktop, or choose another model.", {
+          msg("Set up {provider} in Settings under Providers, or choose another model.", {
             provider: "Antigravity",
           }),
         ),

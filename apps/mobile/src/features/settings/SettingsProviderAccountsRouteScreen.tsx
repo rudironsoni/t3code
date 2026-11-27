@@ -36,6 +36,7 @@ import { useSettingsEnvironmentMenu } from "./components/SettingsEnvironmentFilt
 import { SettingsScreen } from "./components/SettingsScreen";
 import { SettingsSection } from "./components/SettingsSection";
 import { AddClaudeAccount, ClaudeAccount } from "./ClaudeAccounts";
+import { ProviderSetup } from "./ProviderSetup";
 import { CLAUDE_DRIVER } from "./claude-accounts";
 import { useSettingsEnvironmentFilter, type SettingsTarget } from "./settings-environment-filter";
 
@@ -51,6 +52,7 @@ export function SettingsProviderAccountsRouteScreen() {
       <ScreenScrollView
         className="flex-1"
         contentInsetAdjustmentBehavior="automatic"
+        keyboardShouldPersistTaps="handled"
         contentContainerClassName="gap-6 px-5 pt-4"
         contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 18) + 18 }}
       >
@@ -113,15 +115,11 @@ function EnvironmentProviders({
           divider={index > 0}
         />
       ))}
-      {accounts.length === 0 ? (
-        <Text className="p-4 text-foreground-muted">
-          <T>Configure a provider with in-app sign-in in web or desktop Settings.</T>
-        </Text>
-      ) : null}
       {claudeAccounts.map((provider) => (
         <ClaudeAccount key={provider.instanceId} environment={environment} provider={provider} />
       ))}
       {canAddClaude ? <AddClaudeAccount environment={environment} /> : null}
+      <ProviderSetup environment={environment} providers={providers} />
     </>
   );
 }

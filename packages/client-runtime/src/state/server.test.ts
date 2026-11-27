@@ -1,4 +1,5 @@
 import {
+  AuthProvidersManageScope,
   EnvironmentId,
   ProviderDriverKind,
   ServerSelfUpdateError,
@@ -77,6 +78,7 @@ import {
 import { errorDisplayMessage, errorI18nMessage } from "../errors/translatable.ts";
 import { runAtomCommand } from "./runtime.ts";
 import { applyServerConfigProjection } from "./serverConfigProjection.ts";
+import { createEnvironmentSessionAtoms } from "./session.ts";
 
 const CONFIG = {
   availableEditors: [],
@@ -1794,8 +1796,28 @@ describe("provider setup commands", () => {
       const atoms = createServerEnvironmentAtoms(runtime, {
         initialConfigValueAtom: () => Atom.make(CONFIG),
       });
-      const registry = yield* Effect.acquireRelease(Effect.sync(AtomRegistry.make), (registry) =>
-        Effect.sync(() => registry.dispose()),
+      const registry = yield* Effect.acquireRelease(
+        Effect.sync(() =>
+          AtomRegistry.make({
+            initialValues: [
+              [
+                createEnvironmentSessionAtoms(runtime).sessionStateAtom(TARGET.environmentId),
+                AsyncResult.success({
+                  authenticated: true,
+                  auth: {
+                    policy: "desktop-managed-local",
+                    bootstrapMethods: [],
+                    sessionMethods: [],
+                    sessionCookieName: "test",
+                  },
+                  scopes: [AuthProvidersManageScope],
+                  permissions: [AuthProvidersManageScope],
+                }),
+              ],
+            ],
+          }),
+        ),
+        (registry) => Effect.sync(() => registry.dispose()),
       );
       const install = (instanceId: string) =>
         Effect.forkChild(
