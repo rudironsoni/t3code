@@ -11,6 +11,7 @@ import { useEnvironmentQuery } from "../../state/query";
 import { useDebouncedValue } from "../../state/queries";
 
 const emptySearch = { query: "", navigation: null };
+const FIND_CONTROL_SIZE = 44;
 
 export function useThreadFind(thread: ScopedThreadRef | null) {
   const [search, setSearch] = useState<{
@@ -75,22 +76,30 @@ export function ThreadFindBar({
           accessibilityLabel={gt("Find in thread")}
           placeholder={gt("Find in thread")}
           clearAccessibilityLabel={gt("Clear search")}
+          clearButtonMinimumSize={FIND_CONTROL_SIZE}
           value={find.query}
           onChangeText={find.setQuery}
         />
         <IconButton
           icon="chevron.up"
           accessibilityLabel={gt("Previous match")}
+          minimumSize={FIND_CONTROL_SIZE}
           disabled={!canStep}
           onPress={() => find.step(-1)}
         />
         <IconButton
           icon="chevron.down"
           accessibilityLabel={gt("Next match")}
+          minimumSize={FIND_CONTROL_SIZE}
           disabled={!canStep}
           onPress={() => find.step(1)}
         />
-        <IconButton icon="xmark" accessibilityLabel={gt("Close search")} onPress={onClose} />
+        <IconButton
+          icon="xmark"
+          accessibilityLabel={gt("Close search")}
+          minimumSize={FIND_CONTROL_SIZE}
+          onPress={onClose}
+        />
       </View>
       {status !== null ? (
         <AppText
