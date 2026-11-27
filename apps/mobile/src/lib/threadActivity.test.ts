@@ -24,6 +24,7 @@ import {
   threadFeedCompactionLabels,
   createThreadFeedCache,
   deriveThreadFeedPresentation,
+  matchesThreadFindEntry,
   messageFoldRunId,
   type ThreadFeedCache,
   type ThreadFeedEntry,
@@ -132,6 +133,7 @@ it("keeps historical plan detail accessible from its paged turn item", () => {
     "message",
   ]);
   expect(presented[2]).toMatchObject({ activities: [{ projectedItem: { item } }] });
+  expect(presented.find((entry) => matchesThreadFindEntry(entry, item.id))).toBe(presented[2]);
 });
 
 it("shows a compact command as one mobile divider before, during, and after compaction", () => {

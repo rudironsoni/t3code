@@ -213,6 +213,8 @@ import {
 } from "./ThreadComposer";
 import { ComposerPopoverHost } from "./ComposerPopoverHost";
 import { ThreadFeed, type ThreadFeedHistoryControls } from "./ThreadFeed";
+import { ThreadFindBar, useThreadFind } from "./ThreadFindBar";
+import { matchesThreadFindEntry } from "../../lib/threadActivity";
 import { WorkspaceMutationIdProvider } from "./WorkspaceMutationIdProvider";
 import { useThreadTurnSubagents } from "./ThreadAgentsSheet";
 import { ComposerQueuedEditBanner } from "./ComposerQueuedEdit";
@@ -277,6 +279,8 @@ export interface ThreadDetailScreenProps {
   readonly respondingUserInputId: RuntimeRequestId | null;
   readonly connectionStateLabel: EnvironmentConnectionPhase;
   readonly historyControls?: ThreadFeedHistoryControls;
+  readonly findOpen?: boolean;
+  readonly onCloseFind?: () => void;
   readonly activeThreadBusy: boolean;
   readonly canStopThread: boolean;
   readonly queuedRunEdit: QueuedRunEdit | null;
@@ -949,21 +953,31 @@ function ThreadDetailBody(
   const jumpMessageId = useSyncExternalStore(subscribeThreadMessageJump, () =>
     pendingThreadMessageJump(selectedThreadKey),
   );
-  const jumpMessageLoaded =
-    jumpMessageId !== null &&
-    selectedThreadFeed.some((entry) => entry.type === "message" && entry.id === jumpMessageId);
+  const find = useThreadFind(props.findOpen ? props.selectedThreadDetailRef : null);
+  const [landedFindResult, setLandedFindResult] = useState<typeof find.result>(null);
+  const [findBarHeight, setFindBarHeight] = useState(0);
+  if (find.result === null && landedFindResult !== null) setLandedFindResult(null);
+  const findMatch = find.result !== landedFindResult ? find.result?.match : null;
+  const jumpEntryId = jumpMessageId ?? findMatch?.entryId ?? null;
+  const jumpEntryLoaded =
+    jumpEntryId !== null &&
+    selectedThreadFeed.some((entry) => matchesThreadFindEntry(entry, jumpEntryId));
+  const finishJump = () => {
+    if (jumpMessageId !== null) finishThreadMessageJump(selectedThreadKey);
+    else setLandedFindResult(find.result);
+  };
   const historyForJump = props.historyControls;
   // History down to the message in one request; another page if it is not
   // there yet.
   const loadEarlierForJump = useEffectEvent(() => {
-    if (jumpMessageId !== null) historyForJump?.onLoadThrough(jumpMessageId);
+    if (jumpEntryId !== null) historyForJump?.onLoadThrough(jumpEntryId);
   });
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- requests earlier history from the server until the jump target message loads, or ends the jump
   useEffect(() => {
-    if (jumpMessageId === null || jumpMessageLoaded || contentPresentationKind !== "ready") return;
+    if (jumpEntryId === null || jumpEntryLoaded || contentPresentationKind !== "ready") return;
     if (historyForJump?.loading) return;
     if (!historyForJump?.hasMoreHistory || historyForJump.error !== null) {
-      finishThreadMessageJump(selectedThreadKey);
+      if (jumpMessageId !== null) finishThreadMessageJump(selectedThreadKey);
       return;
     }
     loadEarlierForJump();
@@ -972,8 +986,9 @@ function ThreadDetailBody(
     historyForJump?.error,
     historyForJump?.hasMoreHistory,
     historyForJump?.loading,
+    jumpEntryId,
+    jumpEntryLoaded,
     jumpMessageId,
-    jumpMessageLoaded,
     selectedThreadKey,
   ]);
   // A queued-run edit, question or approval owns the composer, and its send carries no fresh session.
@@ -1584,8 +1599,12 @@ function ThreadDetailBody(
                   listRef={listRef}
                   freeze={freeze}
                   anchorMessageId={anchorMessageId}
-                  jumpToMessageId={jumpMessageLoaded ? jumpMessageId : null}
-                  onJumpedToMessage={() => finishThreadMessageJump(selectedThreadKey)}
+                  jumpToEntryId={jumpEntryLoaded ? jumpEntryId : null}
+                  onJumpedToEntry={finishJump}
+                  findEntryId={find.result?.match?.entryId}
+                  jumpViewOffset={
+                    props.findOpen ? navigationHeaderHeight + findBarHeight + 8 : undefined
+                  }
                   contentInsetEndAdjustment={combinedContentInsetEndAdjustment}
                   keyboardOffset={composerKeyboardOffset}
                   sendingWithKeyboard={sendingWithKeyboard}
@@ -2030,6 +2049,21 @@ function ThreadDetailBody(
             </Animated.View>
           </ComposerPopoverHost>
         </KeyboardStickyView>
+      ) : null}
+      {showContent && props.findOpen ? (
+        <View
+          className="absolute left-0 right-0"
+          style={{ top: navigationHeaderHeight }}
+          onLayout={(event) => setFindBarHeight(event.nativeEvent.layout.height)}
+        >
+          <ThreadFindBar
+            find={find}
+            onClose={() => {
+              Keyboard.dismiss();
+              props.onCloseFind?.();
+            }}
+          />
+        </View>
       ) : null}
     </View>
   );

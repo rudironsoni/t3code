@@ -5774,5 +5774,10 @@
   "5d9bc70d1cb3b596": "{count} machines are almost out of disk space",
   "7bb6d3c4fe5cea0f": "{count} machines are overloaded",
   "b48a4b390016a4f0": "Using {usage} while memory is slowing agents down. Stopping it helps the rest.",
-  "0d23483df1d6fc87": "Using {usage} while this machine is overloaded. Stopping it helps the rest."
+  "0d23483df1d6fc87": "Using {usage} while this machine is overloaded. Stopping it helps the rest.",
+  "c4e9b5a68368e9e8": "No matches",
+  "9a1dafe07b8ce33d": "{current} of {total}",
+  "0d8761c57796fb94": "Find in thread",
+  "f67b82db6ff66321": "Previous match",
+  "bac07cd397c7d1a8": "Next match"
 }

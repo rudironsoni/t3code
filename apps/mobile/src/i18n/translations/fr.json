@@ -5766,5 +5766,10 @@
   "5d9bc70d1cb3b596": "{count} machines n’ont presque plus d’espace disque",
   "7bb6d3c4fe5cea0f": "{count} machines sont surchargées",
   "b48a4b390016a4f0": "Utilise {usage} alors que la mémoire ralentit les agents. L’arrêter aide les autres.",
-  "0d23483df1d6fc87": "Utilise {usage} alors que cette machine est surchargée. L’arrêter aide les autres."
+  "0d23483df1d6fc87": "Utilise {usage} alors que cette machine est surchargée. L’arrêter aide les autres.",
+  "c4e9b5a68368e9e8": "Aucun résultat",
+  "9a1dafe07b8ce33d": "{current} sur {total}",
+  "0d8761c57796fb94": "Rechercher dans le fil",
+  "f67b82db6ff66321": "Résultat précédent",
+  "bac07cd397c7d1a8": "Résultat suivant"
 }

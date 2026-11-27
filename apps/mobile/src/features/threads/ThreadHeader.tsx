@@ -23,6 +23,7 @@ export function ThreadHeader(props: {
   readonly hasThreadCwd: boolean;
   readonly inspectorMode: ThreadInspectorMode | null;
   readonly onOpenFilesInspector: () => void;
+  readonly onFindInThread?: () => void;
 }) {
   const gt = useGT();
   const m = useMessages();
@@ -44,6 +45,14 @@ export function ThreadHeader(props: {
         },
       ]
     : [];
+  if (props.onFindInThread) {
+    actions.push({
+      accessibilityLabel: gt("Find in thread"),
+      icon: "magnifyingglass",
+      separateBackground: false,
+      onPress: props.onFindInThread,
+    });
+  }
   const menus = [gitMenu, terminalMenu].filter((menu): menu is AppBarMenu => menu !== null);
 
   return (

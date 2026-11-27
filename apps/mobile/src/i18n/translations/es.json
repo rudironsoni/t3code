@@ -5766,5 +5766,10 @@
   "5d9bc70d1cb3b596": "{count} máquinas casi no tienen espacio en disco",
   "7bb6d3c4fe5cea0f": "{count} máquinas están sobrecargadas",
   "b48a4b390016a4f0": "Usa {usage} mientras la memoria ralentiza los agentes. Detenerlo ayuda al resto.",
-  "0d23483df1d6fc87": "Usa {usage} mientras esta máquina está sobrecargada. Detenerlo ayuda al resto."
+  "0d23483df1d6fc87": "Usa {usage} mientras esta máquina está sobrecargada. Detenerlo ayuda al resto.",
+  "c4e9b5a68368e9e8": "Sin coincidencias",
+  "9a1dafe07b8ce33d": "{current} de {total}",
+  "0d8761c57796fb94": "Buscar en el hilo",
+  "f67b82db6ff66321": "Coincidencia anterior",
+  "bac07cd397c7d1a8": "Coincidencia siguiente"
 }

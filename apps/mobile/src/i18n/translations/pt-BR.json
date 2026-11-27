@@ -5766,5 +5766,10 @@
   "5d9bc70d1cb3b596": "{count} máquinas estão quase sem espaço em disco",
   "7bb6d3c4fe5cea0f": "{count} máquinas estão sobrecarregadas",
   "b48a4b390016a4f0": "Usando {usage} enquanto a memória deixa os agentes lentos. Pará-lo ajuda os demais.",
-  "0d23483df1d6fc87": "Usando {usage} enquanto esta máquina está sobrecarregada. Pará-lo ajuda os demais."
+  "0d23483df1d6fc87": "Usando {usage} enquanto esta máquina está sobrecarregada. Pará-lo ajuda os demais.",
+  "c4e9b5a68368e9e8": "Nenhuma correspondência",
+  "9a1dafe07b8ce33d": "{current} de {total}",
+  "0d8761c57796fb94": "Localizar na thread",
+  "f67b82db6ff66321": "Resultado anterior",
+  "bac07cd397c7d1a8": "Próximo resultado"
 }

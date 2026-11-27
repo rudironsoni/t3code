@@ -5772,5 +5772,10 @@
   "5d9bc70d1cb3b596": "{count} Rechnern geht der Speicherplatz aus",
   "7bb6d3c4fe5cea0f": "{count} Rechner sind überlastet",
   "b48a4b390016a4f0": "Belegt {usage}, während Arbeitsspeicher Agents ausbremst. Ihn zu stoppen hilft den übrigen.",
-  "0d23483df1d6fc87": "Belegt {usage}, während dieser Rechner überlastet ist. Ihn zu stoppen hilft den übrigen."
+  "0d23483df1d6fc87": "Belegt {usage}, während dieser Rechner überlastet ist. Ihn zu stoppen hilft den übrigen.",
+  "c4e9b5a68368e9e8": "Keine Treffer",
+  "9a1dafe07b8ce33d": "{current} von {total}",
+  "0d8761c57796fb94": "Im Thread suchen",
+  "f67b82db6ff66321": "Vorheriger Treffer",
+  "bac07cd397c7d1a8": "Nächster Treffer"
 }
