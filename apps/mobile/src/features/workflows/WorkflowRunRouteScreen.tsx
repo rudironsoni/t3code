@@ -41,11 +41,17 @@ import {
 } from "./WorkflowStepCard";
 import { WORKFLOW_TONE_CLASS, WorkflowChip } from "./WorkflowsScreen";
 import { useWorkflowSubjectOpener, workflowSubjectLine } from "./WorkflowSubject";
+import {
+  useOpenWorkflowRelated,
+  WorkflowRelatedPane,
+  type WorkflowRelatedTarget,
+} from "./WorkflowRelatedPane";
 import { WorkflowTimeline } from "./WorkflowTimeline";
 
 export type WorkflowRunParams = {
   readonly environmentId: string;
   readonly runId: string;
+  readonly related?: WorkflowRelatedTarget;
 };
 
 function QuestionCard(props: {
@@ -179,7 +185,8 @@ function RunBody(props: { readonly environmentId: EnvironmentId; readonly node: 
   const gt = useGT();
   const m = useMessages();
   const sessionId = useEnvironmentSessionId(environmentId);
-  const subjectOpener = useWorkflowSubjectOpener(environmentId);
+  const openRelated = useOpenWorkflowRelated({ environmentId, runId: run.runId });
+  const subjectOpener = useWorkflowSubjectOpener(environmentId, openRelated);
   const detail = useEnvironmentQuery(
     serverEnvironment.workflowRun({ environmentId, input: { runId: run.runId } }),
   );
@@ -235,8 +242,10 @@ function RunBody(props: { readonly environmentId: EnvironmentId; readonly node: 
         ),
     );
   const openSubject = run.subject === undefined ? null : subjectOpener(run.subject);
-  const threadOpener = useWorkflowThreadOpener(environmentId, (thread) =>
-    navigation.dispatch(StackActions.push("Thread", thread)),
+  const threadOpener = useWorkflowThreadOpener(
+    environmentId,
+    (thread) => navigation.dispatch(StackActions.push("Thread", thread)),
+    { openRelated },
   );
   const openStep = (step: string) =>
     navigation.dispatch(
@@ -424,6 +433,9 @@ export function WorkflowRunRouteScreen({ route }: StaticScreenProps<WorkflowRunP
           if (navigation.canGoBack()) navigation.goBack();
         }}
       />
+      {route.params.related === undefined ? null : (
+        <WorkflowRelatedPane related={route.params.related} />
+      )}
       {snapshot === null ? (
         <EmptyState
           variant="plain"

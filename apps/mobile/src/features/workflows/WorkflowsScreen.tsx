@@ -5,6 +5,7 @@ import {
   workflowChip,
   workflowQuestionKinds,
   workflowRunAsksKind,
+  workflowRunInvolves,
   workflowRunLists,
   workflowRunNow,
   workflowRunState,
@@ -12,16 +13,23 @@ import {
   type WorkflowRunNode,
   type WorkflowRunTone,
 } from "@t3tools/client-runtime/workflows";
-import type { EnvironmentId, WorkflowRunsSnapshot } from "@t3tools/contracts";
+import {
+  AuthFilesystemReadScope,
+  type EnvironmentId,
+  type WorkflowRunsSnapshot,
+} from "@t3tools/contracts";
 import { useAtomValue } from "@effect/atom-react";
 import * as Option from "effect/Option";
 import { AsyncResult } from "effect/reactivity";
-import { useNavigation } from "@react-navigation/native";
+import { StackActions, useNavigation } from "@react-navigation/native";
 import { msg, useGT, useMessages } from "gt-react-native";
 import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Button } from "../../components/ui/Button";
+import { SettingsScreen } from "../settings/components/SettingsScreen";
+import { useEnvironmentsWithScope } from "../../state/session";
 import { RelativeTime } from "../../components/RelativeTime";
 import { AppText as Text } from "../../components/ui/AppText";
 import { Chip } from "../../components/ui/Chip";
@@ -34,6 +42,7 @@ import { mobilePreferencesAtom, saveMobilePreferences } from "../../state/prefer
 import { formatEnvironmentQueryError } from "../../state/query";
 import { serverEnvironment } from "../../state/server";
 import { useAtomCommand } from "../../state/use-atom-command";
+import { workflowHostLabel, WorkflowPickerChip } from "./WorkflowHostPicker";
 import { useWorkflowSubjectOpener, workflowSubjectLine } from "./WorkflowSubject";
 
 const TABS = [
@@ -143,6 +152,7 @@ function EnvironmentRuns(props: {
   readonly label: string | null;
   readonly snapshot: WorkflowRunsSnapshot;
   readonly tab: WorkflowListTab;
+  readonly workflow: string | null;
   /** The kind of question to narrow Needs you to; null for every run in it. */
   readonly kind: string | null;
 }) {
@@ -151,11 +161,18 @@ function EnvironmentRuns(props: {
   const m = useMessages();
   const subjectOpener = useWorkflowSubjectOpener(props.environmentId);
   const [showSkipped, setShowSkipped] = useState(false);
-  const { snapshot, tab } = props;
+  const { snapshot, tab, workflow } = props;
   const visible = listedWorkflowRuns(snapshot.runs, showSkipped);
   const inTab = workflowRunLists(
     groupWorkflowRuns(snapshot.workflows, visible.runs, snapshot.questions),
-  )[tab];
+  )[tab].filter((node) => workflow === null || workflowRunInvolves(node, workflow));
+  const skipped =
+    workflow === null
+      ? visible.skipped
+      : listedWorkflowRuns(
+          snapshot.runs.filter((run) => run.workflow === workflow),
+          false,
+        ).skipped;
   const kind = tab === "needs-you" ? props.kind : null;
   const listed =
     kind === null
@@ -187,16 +204,14 @@ function EnvironmentRuns(props: {
           />
         ))
       )}
-      {tab === "all" && visible.skipped > 0 ? (
+      {tab === "all" && skipped > 0 ? (
         <Pressable
           accessibilityRole="button"
           className="items-center px-5 py-4"
           onPress={() => setShowSkipped(!showSkipped)}
         >
           <Text className="text-xs text-foreground-muted">
-            {showSkipped
-              ? gt("Hide skipped")
-              : gt("Show {count} skipped", { count: visible.skipped })}
+            {showSkipped ? gt("Hide skipped") : gt("Show {count} skipped", { count: skipped })}
           </Text>
         </Pressable>
       ) : null}
@@ -207,7 +222,7 @@ function EnvironmentRuns(props: {
 const TAB_ORDER: ReadonlyArray<WorkflowListTab> = ["needs-you", "running", "all"];
 
 /** What waits on a person in each environment, as the kinds of question are counted from. */
-const needsYouSources = (snapshots: ReadonlyArray<WorkflowRunsSnapshot>) =>
+const needsYouSources = (snapshots: ReadonlyArray<WorkflowRunsSnapshot>, workflow: string | null) =>
   snapshots.map((snapshot) => ({
     workflows: snapshot.workflows,
     nodes: workflowRunLists(
@@ -216,13 +231,32 @@ const needsYouSources = (snapshots: ReadonlyArray<WorkflowRunsSnapshot>) =>
         listedWorkflowRuns(snapshot.runs, false).runs,
         snapshot.questions,
       ),
-    )["needs-you"],
+    )["needs-you"].filter((node) => workflow === null || workflowRunInvolves(node, workflow)),
   }));
 
 /** The Workflows tab: what waits on you first, in every environment this device is connected to. */
+export function SettingsWorkflowsRouteScreen() {
+  const gt = useGT();
+  return (
+    <SettingsScreen title={gt("Workflows")}>
+      <WorkflowsScreen />
+    </SettingsScreen>
+  );
+}
+
 export function WorkflowsScreen() {
+  const navigation = useNavigation();
   const { environments, isReady } = useEnvironments();
   const [tab, setTab] = useState<WorkflowListTab | null>(null);
+  const [workflow, setWorkflow] = useState<string | null>(null);
+  const canReadDefinitions = useEnvironmentsWithScope(environments, AuthFilesystemReadScope);
+  const openDefinitions = (environmentId?: EnvironmentId) =>
+    navigation.dispatch(
+      StackActions.push(
+        "WorkflowDefinitions",
+        environmentId === undefined ? undefined : { environmentId },
+      ),
+    );
   const insets = useSafeAreaInsets();
   const gt = useGT();
   const m = useMessages();
@@ -253,6 +287,20 @@ export function WorkflowsScreen() {
   const withRuns = sections.flatMap(({ environment, snapshot }) =>
     snapshot !== null && snapshot.runs.length > 0 ? [{ environment, snapshot }] : [],
   );
+  const workflows = [
+    ...new Set(
+      sections.flatMap(({ snapshot }) =>
+        snapshot === null
+          ? []
+          : [
+              ...snapshot.workflows.map(({ name }) => name),
+              ...snapshot.runs.map((run) => run.workflow),
+            ],
+      ),
+    ),
+  ].sort((left, right) => left.localeCompare(right));
+  const workflowOptions =
+    workflow === null || workflows.includes(workflow) ? workflows : [workflow, ...workflows];
   const settled = sections.every(({ snapshot, error }) => snapshot !== null || error !== null);
   // Open on the most pressing list any environment has.
   const opening =
@@ -272,7 +320,13 @@ export function WorkflowsScreen() {
       : null;
   const kinds =
     shown === "needs-you"
-      ? workflowQuestionKinds(needsYouSources(withRuns.map(({ snapshot }) => snapshot)), kind)
+      ? workflowQuestionKinds(
+          needsYouSources(
+            withRuns.map(({ snapshot }) => snapshot),
+            workflow,
+          ),
+          kind,
+        )
       : [];
   const pickKind = (next: string | undefined) => {
     // Held here, so answering the kind's last question does not move the list on.
@@ -284,6 +338,40 @@ export function WorkflowsScreen() {
       contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={{ paddingBottom: insets.bottom + 96 }}
     >
+      <View className="flex-row flex-wrap gap-2 px-5 pt-3">
+        <Button label={gt("Definitions")} onPress={() => openDefinitions()} />
+        <Button
+          label={gt("Workflow settings")}
+          onPress={() => navigation.navigate("SettingsWorkflowHost")}
+        />
+      </View>
+      {sections.map(({ environment, snapshot }) => {
+        const problem = snapshot?.definition?.problem;
+        if (!problem) return null;
+        return (
+          <View
+            key={environment.environmentId}
+            className="mx-5 mt-3 gap-2 rounded-xl border border-danger-border p-3"
+          >
+            <Text accessibilityRole="alert" className="font-t3-medium text-danger-foreground">
+              {gt("A workflow file has a problem.")}
+            </Text>
+            {environments.length > 1 ? (
+              <Text className="text-sm text-foreground">
+                {workflowHostLabel(environment, environments)}
+              </Text>
+            ) : null}
+            <Text className="text-sm text-foreground">{problem}</Text>
+            {canReadDefinitions.has(environment.environmentId) ? (
+              <Button
+                label={gt("Open definitions")}
+                tone="text"
+                onPress={() => openDefinitions(environment.environmentId)}
+              />
+            ) : null}
+          </View>
+        );
+      })}
       {sections.flatMap(({ environment, snapshot, error }) =>
         snapshot === null && error !== null
           ? [
@@ -291,18 +379,20 @@ export function WorkflowsScreen() {
                 key={`error:${environment.environmentId}`}
                 className="px-5 py-3 text-sm text-danger-foreground"
               >
-                {environments.length > 1 ? `${environment.label}: ${error}` : error}
+                {environments.length > 1
+                  ? `${workflowHostLabel(environment, environments)}: ${error}`
+                  : error}
               </Text>,
             ]
           : [],
       )}
-      {withRuns.length === 0 ? (
+      {withRuns.length === 0 && workflowOptions.length === 0 ? (
         settled ? (
           <EmptyState
             variant="plain"
             title={gt("No workflow runs yet")}
             detail={gt(
-              "A workflow ties agents, code, schedules and questions to you into one run that survives restarts. Write one on your computer, under Workflows, then Definitions.",
+              "A workflow ties agents, code, schedules and questions to you into one run that survives restarts.",
             )}
           />
         ) : null
@@ -316,6 +406,27 @@ export function WorkflowsScreen() {
               role="tab"
             />
           </View>
+          {workflowOptions.length === 0 ? null : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerClassName="gap-2 px-5 pb-2"
+            >
+              <WorkflowPickerChip
+                label={gt("All workflows")}
+                selected={workflow === null}
+                onPress={() => setWorkflow(null)}
+              />
+              {workflowOptions.map((name) => (
+                <WorkflowPickerChip
+                  key={name}
+                  label={name}
+                  selected={workflow === name}
+                  onPress={() => setWorkflow(name)}
+                />
+              ))}
+            </ScrollView>
+          )}
           {kinds.length === 0 ? null : (
             <ScrollView
               horizontal
@@ -340,13 +451,19 @@ export function WorkflowsScreen() {
               ))}
             </ScrollView>
           )}
+          {withRuns.length === 0 && settled ? (
+            <Text className="px-5 py-6 text-center text-sm text-foreground-muted">
+              {m(NOTHING[shown])}
+            </Text>
+          ) : null}
           {withRuns.map(({ environment, snapshot }) => (
             <EnvironmentRuns
               key={environment.environmentId}
               environmentId={environment.environmentId}
-              label={environments.length > 1 ? environment.label : null}
+              label={environments.length > 1 ? workflowHostLabel(environment, environments) : null}
               snapshot={snapshot}
               tab={shown}
+              workflow={workflow}
               kind={kind}
             />
           ))}

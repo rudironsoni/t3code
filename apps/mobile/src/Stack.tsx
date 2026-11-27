@@ -141,6 +141,12 @@ import { SettingsProjectOverviewRouteScreen } from "./features/settings/Settings
 import { UsageLimitAccountScreen } from "./features/usage/UsageLimitsPooled";
 import { UsageRouteScreen } from "./features/usage/UsageRouteScreen";
 import { WorkflowRunRouteScreen } from "./features/workflows/WorkflowRunRouteScreen";
+import { SettingsWorkflowsRouteScreen } from "./features/workflows/WorkflowsScreen";
+import {
+  WorkflowDefinitionsScreen,
+  WorkflowDefinitionEditorScreen,
+} from "./features/workflows/WorkflowDefinitionsScreen";
+import { WorkflowHostSettingsScreen } from "./features/workflows/WorkflowHostSettingsScreen";
 import { WorkflowStepSheet } from "./features/workflows/WorkflowStepSheet";
 import { SettingsAboutRouteScreen } from "./features/settings/SettingsAboutRouteScreen";
 import { SettingsNotificationsRouteScreen } from "./features/settings/SettingsNotificationsRouteScreen";
@@ -241,6 +247,14 @@ const SETTINGS_SCREENS = {
       ...pageRoute({ itemStyle: "standard", root: true }),
       ...(Platform.OS === "android" ? { animation: "none" as const } : {}),
     },
+  }),
+  SettingsWorkflows: createNativeStackScreen({
+    screen: SettingsWorkflowsRouteScreen,
+    options: settingsPage(),
+  }),
+  SettingsWorkflowHost: createNativeStackScreen({
+    screen: WorkflowHostSettingsScreen,
+    options: settingsPage(),
   }),
   SettingsEnvironments: createNativeStackScreen({
     screen: SettingsEnvironmentsRouteScreen,
@@ -791,6 +805,14 @@ const RootStackConfig = createWorkspaceStackNavigator({
     ThreadQueue: createNativeStackScreen({
       screen: ThreadQueueSheet,
       options: sheetRoute({ detent: 0.65, androidMaxDetent: 0.95 }),
+    }),
+    WorkflowDefinitions: createNativeStackScreen({
+      screen: WorkflowDefinitionsScreen,
+      options: pageRoute(),
+    }),
+    WorkflowDefinition: createNativeStackScreen({
+      screen: WorkflowDefinitionEditorScreen,
+      options: modalRoute({ header: "solid" }),
     }),
     WorkflowRun: createNativeStackScreen({
       screen: WorkflowRunRouteScreen,

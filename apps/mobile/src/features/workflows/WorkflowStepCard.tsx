@@ -32,6 +32,7 @@ import * as Dialog from "../../components/ui/Dialog";
 import { cn } from "../../lib/cn";
 import { useEnvironments } from "../../state/environments";
 import { useLinkedEnvironments } from "../../state/peerLinks";
+import type { WorkflowRelatedTarget } from "./WorkflowRelatedPane";
 import { useOpenLinkedThreadRead } from "../threads/useOpenLinkedThread";
 
 export function reportFailure(title: string, result: AtomCommandResult<unknown, unknown>) {
@@ -82,7 +83,10 @@ export function Facts(props: {
 export function useWorkflowThreadOpener(
   environmentId: EnvironmentId,
   openDirect: (thread: ScopedThreadRef) => void,
-  options?: { readonly replace?: boolean },
+  options?: {
+    readonly replace?: boolean;
+    readonly openRelated?: ((target: WorkflowRelatedTarget) => boolean) | undefined;
+  },
 ) {
   const { presentationById } = useEnvironments();
   const linkedEnvironments = useLinkedEnvironments(environmentId);
@@ -102,9 +106,23 @@ export function useWorkflowThreadOpener(
     });
     if (open === "unavailable") return null;
     if (open === "linked" && label !== undefined) {
-      return () => openLinkedRead(ref, { viaEnvironmentId: environmentId, label }, null, options);
+      const linked = { viaEnvironmentId: environmentId, label };
+      return () => {
+        if (
+          !options?.openRelated?.({
+            kind: "thread",
+            target: { type: "linkedThread", ...ref, linked },
+          })
+        ) {
+          openLinkedRead(ref, linked, null, options);
+        }
+      };
     }
-    return () => openDirect(ref);
+    return () => {
+      if (!options?.openRelated?.({ kind: "thread", target: { type: "thread", ...ref } })) {
+        openDirect(ref);
+      }
+    };
   };
 }
 

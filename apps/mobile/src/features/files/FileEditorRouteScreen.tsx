@@ -45,7 +45,6 @@ export function FileEditorRouteScreen({ route }: StaticScreenProps<FileEditorPar
   const file = useEnvironmentQuery(fileAtom);
   const write = useAtomCommand(projectEnvironment.writeFile, { reportFailure: false });
   const [draft, setDraft] = useState<{ original: string; text: string } | null>(null);
-  const [hasFocused, setHasFocused] = useState(false);
   const [saving, setSaving] = useState(false);
   const inFlight = useRef(false);
   const saved = useRef(false);
@@ -129,19 +128,10 @@ export function FileEditorRouteScreen({ route }: StaticScreenProps<FileEditorPar
         >
           <SafeAreaView edges={["bottom", "left", "right"]} style={{ flex: 1 }}>
             {text !== null && original !== null ? (
-              <TextInput
-                accessibilityLabel={gt("File contents")}
-                autoCapitalize="none"
-                autoCorrect={false}
-                className="flex-1 px-4 py-3 font-mono text-base text-foreground"
-                editable={!saving}
-                multiline
-                onChangeText={(text) => setDraft({ original, text })}
-                onFocus={() => setHasFocused(true)}
-                selection={hasFocused ? undefined : { start: 0, end: 0 }}
-                spellCheck={false}
-                style={{ textAlignVertical: "top" }}
+              <FileEditorInput
                 value={text}
+                editable={!saving}
+                onChangeText={(text) => setDraft({ original, text })}
               />
             ) : file.isPending ? (
               <LoadingScreen message={gt("Opening file...")} messagePlacement="above-spinner" />
@@ -152,5 +142,28 @@ export function FileEditorRouteScreen({ route }: StaticScreenProps<FileEditorPar
         </KeyboardAvoidingView>
       </ScreenContent>
     </View>
+  );
+}
+
+export function FileEditorInput(props: {
+  readonly value: string;
+  readonly editable: boolean;
+  readonly onChangeText: (text: string) => void;
+}) {
+  const gt = useGT();
+  const [hasFocused, setHasFocused] = useState(false);
+  return (
+    <TextInput
+      accessibilityLabel={gt("File contents")}
+      autoCapitalize="none"
+      autoCorrect={false}
+      className="flex-1 px-4 py-3 font-mono text-base text-foreground"
+      multiline
+      onFocus={() => setHasFocused(true)}
+      selection={hasFocused ? undefined : { start: 0, end: 0 }}
+      spellCheck={false}
+      style={{ textAlignVertical: "top" }}
+      {...props}
+    />
   );
 }

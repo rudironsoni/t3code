@@ -23,6 +23,8 @@ import {
   workflowRunFeedOf,
 } from "./WorkflowStepCard";
 
+import { useOpenWorkflowRelated } from "./WorkflowRelatedPane";
+
 export type WorkflowStepParams = {
   readonly environmentId: string;
   readonly runId: string;
@@ -57,10 +59,11 @@ export function WorkflowStepSheet({ route }: StaticScreenProps<WorkflowStepParam
   );
   const quickSteps = quick?.kind === "quick" ? quick.steps : [];
   // A thread or a run replaces the leaf sheet so workspace back navigation still works.
+  const openRelated = useOpenWorkflowRelated(route.params);
   const threadOpener = useWorkflowThreadOpener(
     environmentId,
     (thread) => navigation.dispatch(StackActions.replace("Thread", thread)),
-    { replace: true },
+    { replace: true, openRelated },
   );
   const openRun = (runId: string) =>
     navigation.dispatch(StackActions.replace("WorkflowRun", { environmentId, runId }));
