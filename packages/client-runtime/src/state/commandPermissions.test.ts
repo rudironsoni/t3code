@@ -22,6 +22,7 @@ import {
   ORCHESTRATION_V2_WS_METHODS,
   ScheduledTaskId,
   WS_METHODS,
+  type AuthEnvironmentScope,
   type AuthSessionState,
   type PeerLinkSummary,
 } from "@t3tools/contracts";
@@ -45,7 +46,10 @@ const sessions = Atom.family((_id: EnvironmentId) =>
 );
 const env = EnvironmentId.make("target");
 const other = EnvironmentId.make("other");
-const grant = (allowed: boolean): AuthSessionState => ({
+const grant = (
+  allowed: boolean,
+  scope: AuthEnvironmentScope = AuthOrchestrationOperateScope,
+): AuthSessionState => ({
   authenticated: true,
   auth: {
     policy: "remote-reachable",
@@ -53,8 +57,8 @@ const grant = (allowed: boolean): AuthSessionState => ({
     sessionMethods: [],
     sessionCookieName: "test",
   },
-  scopes: allowed ? [AuthOrchestrationOperateScope] : [],
-  permissions: allowed ? [AuthOrchestrationOperateScope] : [],
+  scopes: allowed ? [scope] : [],
+  permissions: allowed ? [scope] : [],
 });
 const runtime = Atom.runtime(
   Layer.succeed(EnvironmentRegistry, {
@@ -232,24 +236,31 @@ describe("command permissions", () => {
   );
 
   it.effect.each([
-    WS_METHODS.scheduledTasksDelete,
-    ORCHESTRATION_V2_WS_METHODS.stopWorkflow,
-    WS_METHODS.workflowsAnswer,
-    WS_METHODS.workflowsResume,
-    WS_METHODS.workflowsCancel,
-  ])("uses the target grant for both availability and execution of %s", (method) =>
-    Effect.gen(function* () {
-      const registry = yield* setup;
-      const permissions = createCommandPermissions(runtime, method);
-      registry.set(sessions(env), AsyncResult.success(grant(true)));
-      expect(registry.get(permissions.permissionAtom(env))).toBe(true);
-      expect(permissions.permissionAtom(env)).toBe(permissions.permissionAtom(env));
-      yield* permissions.authorize(registry, env);
-      registry.set(sessions(other), AsyncResult.success(grant(false)));
-      expect(registry.get(permissions.permissionAtom(other))).toBe(false);
-      const denied = yield* permissions.authorize(registry, other).pipe(Effect.flip);
-      expect(denied._tag).toBe("EnvironmentAuthorizationError");
-    }),
+    [WS_METHODS.scheduledTasksDelete, AuthOrchestrationOperateScope],
+    [ORCHESTRATION_V2_WS_METHODS.stopWorkflow, AuthOrchestrationOperateScope],
+    [WS_METHODS.workflowsAnswer, AuthOrchestrationOperateScope],
+    [WS_METHODS.workflowsResume, AuthOrchestrationOperateScope],
+    [WS_METHODS.workflowsCancel, AuthOrchestrationOperateScope],
+    [WS_METHODS.providerInstallStart, AuthProvidersManageScope],
+    [WS_METHODS.providerInstallCancel, AuthProvidersManageScope],
+    [WS_METHODS.providerInstallRemove, AuthProvidersManageScope],
+    [WS_METHODS.serverPrepareAcpRegistryAgent, AuthProvidersManageScope],
+    [WS_METHODS.serverUninstallAcpRegistryManagedBinary, AuthProvidersManageScope],
+  ] as const)(
+    "uses the target grant for both availability and execution of %s",
+    ([method, scope]) =>
+      Effect.gen(function* () {
+        const registry = yield* setup;
+        const permissions = createCommandPermissions(runtime, method);
+        registry.set(sessions(env), AsyncResult.success(grant(true, scope)));
+        expect(registry.get(permissions.permissionAtom(env))).toBe(true);
+        expect(permissions.permissionAtom(env)).toBe(permissions.permissionAtom(env));
+        yield* permissions.authorize(registry, env);
+        registry.set(sessions(other), AsyncResult.success(grant(false)));
+        expect(registry.get(permissions.permissionAtom(other))).toBe(false);
+        const denied = yield* permissions.authorize(registry, other).pipe(Effect.flip);
+        expect(denied._tag).toBe("EnvironmentAuthorizationError");
+      }),
   );
   it.effect("saving workflow definitions takes more than operating threads", () =>
     Effect.gen(function* () {

@@ -130,6 +130,10 @@ const SETTINGS_SEARCH_TERMS = {
   ],
   SettingsProviderAccounts: [
     msg("provider accounts", { $context: "settings search keyword" }),
+    msg("provider setup", { $context: "settings search keyword" }),
+    "ACP Registry",
+    msg("custom models", { $context: "settings search keyword" }),
+    msg("text generators", { $context: "settings search keyword" }),
     "codex",
     "claude",
     "cursor",
