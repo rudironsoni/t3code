@@ -9,6 +9,7 @@ export interface SearchFieldProps {
   readonly inputRef: RefObject<TextInputInstance | null>;
   readonly accessibilityLabel: string;
   readonly clearAccessibilityLabel: string;
+  readonly clearButtonMinimumSize?: number;
   readonly placeholder: string;
   readonly value: string;
   readonly onChangeText: (value: string) => void;
@@ -19,6 +20,7 @@ export function SearchField({
   autoFocus = true,
   accessibilityLabel,
   clearAccessibilityLabel,
+  clearButtonMinimumSize,
   placeholder,
   value,
   onChangeText,
@@ -59,7 +61,17 @@ export function SearchField({
         <Pressable
           accessibilityLabel={clearAccessibilityLabel}
           accessibilityRole="button"
-          hitSlop={10}
+          hitSlop={clearButtonMinimumSize === undefined ? 10 : undefined}
+          style={
+            clearButtonMinimumSize === undefined
+              ? undefined
+              : {
+                  minWidth: clearButtonMinimumSize,
+                  minHeight: clearButtonMinimumSize,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }
+          }
           onPress={() => {
             onChangeText("");
             inputRef.current?.focus();

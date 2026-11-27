@@ -21,6 +21,7 @@ export function IconButton(props: IconButtonProps) {
       accessibilityLabel={props.accessibilityLabel}
       accessibilityRole="button"
       accessibilityState={{ disabled: Boolean(props.disabled), selected: props.selected }}
+      style={{ minWidth: props.minimumSize, minHeight: props.minimumSize }}
       className={cn(
         "size-12 items-center justify-center",
         props.disabled && variant !== "standard"

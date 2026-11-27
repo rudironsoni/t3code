@@ -14,7 +14,8 @@ import { SymbolView } from "./AppSymbol";
 
 export function IconButton(props: IconButtonProps) {
   const { colors } = useControlTheme();
-  const { iconSize, buttonSize } = useAndroidControlSizing();
+  const { iconSize, buttonSize: defaultButtonSize } = useAndroidControlSizing();
+  const buttonSize = Math.max(defaultButtonSize, props.minimumSize ?? 0);
   const variant = props.variant ?? "standard";
   const Component =
     variant === "standard"

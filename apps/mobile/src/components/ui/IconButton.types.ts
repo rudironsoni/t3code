@@ -8,6 +8,7 @@ export interface IconButtonProps {
   readonly selected?: boolean;
   readonly variant?: "standard" | "primary" | "tonal" | "danger";
   readonly tintColorClassName?: string;
+  readonly minimumSize?: number;
   /** Android only. */
   readonly iconScale?: number;
 }
