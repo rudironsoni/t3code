@@ -14,7 +14,7 @@ const ORIENTATION_METHODS = `
     requestedOrientation = if (resources.configuration.smallestScreenWidthDp >= 600) {
       ActivityInfo.SCREEN_ORIENTATION_FULL_USER
     } else {
-      ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+      ActivityInfo.SCREEN_ORIENTATION_USER
     }
   }
 `;

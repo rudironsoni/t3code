@@ -88,7 +88,7 @@ describe("withAndroidTabletOrientation", () => {
       /override fun onCreate\(savedInstanceState: Bundle\?\)\s*\{[^}]*applyTabletOrientation\(\)[^}]*super\.onCreate\(null\)/,
     );
     expect(once.mainActivity).toMatch(
-      /private fun applyTabletOrientation\(\)\s*\{\s*requestedOrientation = if \(resources\.configuration\.smallestScreenWidthDp >= 600\)\s*\{\s*ActivityInfo\.SCREEN_ORIENTATION_FULL_USER\s*\} else \{\s*ActivityInfo\.SCREEN_ORIENTATION_PORTRAIT\s*\}/,
+      /private fun applyTabletOrientation\(\)\s*\{\s*requestedOrientation = if \(resources\.configuration\.smallestScreenWidthDp >= 600\)\s*\{\s*ActivityInfo\.SCREEN_ORIENTATION_FULL_USER\s*\} else \{\s*ActivityInfo\.SCREEN_ORIENTATION_USER\s*\}/,
     );
     expect(await prebuildAndroid(once)).toEqual(once);
     const existingActivity = once.mainActivity

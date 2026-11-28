@@ -135,6 +135,7 @@ export function workspaceHasColumns() {
     height,
     nativeMetrics: metrics,
     nativeWorkspace: nativeWorkspaceColumnsSupportedFor(metrics),
+    isPad: Platform.OS === "ios" && Platform.isPad,
   }).usesSplitView;
 }
 

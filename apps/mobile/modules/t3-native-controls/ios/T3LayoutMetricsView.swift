@@ -63,10 +63,7 @@ final class T3LayoutMetricsView: ExpoView {
   }
 
   private func publishMetrics() {
-    guard let window, bounds.width > 0, bounds.height > 0, let hasHinge else { return }
-    if hasHinge {
-      T3WorkspaceOrientationSubscriber.allowHingeOrientations(in: window)
-    }
+    guard window != nil, bounds.width > 0, bounds.height > 0, let hasHinge else { return }
     var verticalBarEdge = "none"
     var regions: [[String: Any]] = []
     var bottomBarInset: CGFloat?
