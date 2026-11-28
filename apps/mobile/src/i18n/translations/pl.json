@@ -5774,5 +5774,12 @@
   "5d9bc70d1cb3b596": "{count, plural, one {Na {count} maszynie prawie brak miejsca na dysku} other {Na {count} maszynach prawie brak miejsca na dysku}}",
   "7bb6d3c4fe5cea0f": "{count, plural, one {{count} maszyna jest przeciążona} few {{count} maszyny są przeciążone} many {{count} maszyn jest przeciążonych} other {{count} maszyny są przeciążone}}",
   "b48a4b390016a4f0": "Zajmuje {usage}, gdy pamięć spowalnia agentów. Zatrzymanie go pomoże pozostałym.",
-  "0d23483df1d6fc87": "Zajmuje {usage}, gdy ta maszyna jest przeciążona. Zatrzymanie go pomoże pozostałym."
+  "0d23483df1d6fc87": "Zajmuje {usage}, gdy ta maszyna jest przeciążona. Zatrzymanie go pomoże pozostałym.",
+  "a1823ca6bbde950a": "Nie można wykonać zrzutu ekranu",
+  "f392b075f5becc69": "Zbadaj element",
+  "85178d12c14beae2": "Dołącz zrzut ekranu",
+  "cf091663b9772a12": "Dotknij elementu, aby go zbadać.",
+  "800c8d01b6b92812": "Nie można zbadać tego elementu.",
+  "3a69d32c08795a35": "Wybrano {element}",
+  "defd78615709e367": "Dołącz element"
 }
