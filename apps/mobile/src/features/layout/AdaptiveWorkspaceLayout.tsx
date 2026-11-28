@@ -274,12 +274,17 @@ function AdaptiveWorkspaceLayoutContent(
   const usesPresentationHost = use(WorkspacePresentationHostContext);
   const windowDimensions = useWindowDimensions();
   const nativeMetrics = useNativeLayoutMetrics();
-  const { width: viewportWidth, height } = nativeMetrics ?? windowDimensions;
+  const { width: windowWidth, height } = nativeMetrics ?? windowDimensions;
   const pathname = props.pathname;
   const workspace = useWorkspaceTabs();
   // Settings and Usage occupy the workspace rather than a list/detail pair.
   const androidSettingsOpen = useAndroidWorkspaceRoot()?.settingsOpen ?? false;
   const safeAreaInsets = useSafeAreaInsets();
+  const isPad = Platform.OS === "ios" && Platform.isPad;
+  const insetLandscapeEdges = !nativeWorkspace && !isPad && windowWidth > height;
+  const leftInset = insetLandscapeEdges ? safeAreaInsets.left : 0;
+  const rightInset = insetLandscapeEdges ? safeAreaInsets.right : 0;
+  const viewportWidth = windowWidth - leftInset - rightInset;
   const workspacePage =
     Platform.OS === "android" &&
     (androidSettingsOpen ||
@@ -305,8 +310,8 @@ function AdaptiveWorkspaceLayoutContent(
   // re-renders on any layout state change, and the inspector registration then loops: each
   // re-register re-renders its screen, which hands over a new inspector renderer.
   const baseLayout = useMemo(
-    () => deriveLayout({ width: viewportWidth, height, nativeMetrics, nativeWorkspace }),
-    [height, viewportWidth, nativeMetrics, nativeWorkspace],
+    () => deriveLayout({ width: windowWidth, height, nativeMetrics, nativeWorkspace, isPad }),
+    [height, windowWidth, nativeMetrics, nativeWorkspace, isPad],
   );
   // The overlay sidebar closes when a page opens from it, and stays open on a list or on the
   // page a tab switch opened (`keepOpenFor`, set by that switch).
@@ -1018,6 +1023,7 @@ function AdaptiveWorkspaceLayoutContent(
     <View
       testID="adaptive-workspace-layout"
       className={Platform.OS === "android" ? "flex-1 flex-row bg-header" : "flex-1 flex-row"}
+      style={{ marginLeft: leftInset, marginRight: rightInset }}
     >
       <AndroidHingeObserver onChange={handleHingeChange} />
       {shouldRenderNavigationRail ? (

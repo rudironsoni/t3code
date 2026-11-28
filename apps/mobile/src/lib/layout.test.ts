@@ -125,10 +125,30 @@ describe("width classes", () => {
     { width: 600, height: 900, variant: "medium" },
     { width: 719, height: 900, variant: "medium" },
     { width: 720, height: 900, variant: "expanded" },
-    { width: 900, height: 599, variant: "compact" },
+    { width: 719, height: 400, variant: "compact" },
+    { width: 720, height: 400, variant: "expanded" },
+    { width: 900, height: 599, isPad: true, variant: "compact" },
   ] as const)("classes a window without native columns by size: %j", ({ variant, ...size }) => {
     expect(deriveLayout(size).variant).toBe(variant);
   });
+
+  it.each([
+    { width: 819, variant: "compact" },
+    { width: 820, variant: "expanded" },
+  ] as const)(
+    "fits short phone columns inside the horizontal safe area: %j",
+    ({ width, variant }) => {
+      const nativeMetrics = {
+        width,
+        height: 400,
+        horizontalSizeClass: "compact" as const,
+        verticalBarEdge: "none" as const,
+        safeArea: { top: 0, bottom: 20, left: 50, right: 50 },
+        reservedRegions: [],
+      };
+      expect(deriveLayout({ ...nativeMetrics, nativeMetrics }).variant).toBe(variant);
+    },
+  );
 });
 
 describe("isPrimarySidebarPinned", () => {

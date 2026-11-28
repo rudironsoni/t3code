@@ -752,6 +752,7 @@ internal class SelectionAwareEditText(
 
   override fun onCreateInputConnection(outAttrs: EditorInfo): InputConnection? {
     val connection = super.onCreateInputConnection(outAttrs) ?: return null
+    outAttrs.imeOptions = outAttrs.imeOptions or EditorInfo.IME_FLAG_NO_FULLSCREEN
     return object : InputConnectionWrapper(connection, false) {
       override fun deleteSurroundingText(
         beforeLength: Int,

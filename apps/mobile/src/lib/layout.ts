@@ -103,6 +103,7 @@ export function deriveLayout(input: {
   readonly height: number;
   readonly nativeMetrics?: NativeLayoutMetrics | null;
   readonly nativeWorkspace?: boolean;
+  readonly isPad?: boolean;
 }): Layout {
   const { width, height } = input;
   const metrics = input.nativeMetrics;
@@ -126,7 +127,9 @@ export function deriveLayout(input: {
           ? "medium"
           : "expanded"
         : "compact"
-      : height < SPLIT_LAYOUT_MIN_HEIGHT || width < MEDIUM_LAYOUT_MIN_WIDTH
+      : (height < SPLIT_LAYOUT_MIN_HEIGHT &&
+            (input.isPad || usableWidth < EXPANDED_LAYOUT_MIN_WIDTH)) ||
+          width < MEDIUM_LAYOUT_MIN_WIDTH
         ? "compact"
         : width >= EXPANDED_LAYOUT_MIN_WIDTH
           ? "expanded"
