@@ -5774,5 +5774,10 @@
   "5d9bc70d1cb3b596": "{count, plural, one {Na {count} maszynie prawie brak miejsca na dysku} other {Na {count} maszynach prawie brak miejsca na dysku}}",
   "7bb6d3c4fe5cea0f": "{count, plural, one {{count} maszyna jest przeciążona} few {{count} maszyny są przeciążone} many {{count} maszyn jest przeciążonych} other {{count} maszyny są przeciążone}}",
   "b48a4b390016a4f0": "Zajmuje {usage}, gdy pamięć spowalnia agentów. Zatrzymanie go pomoże pozostałym.",
-  "0d23483df1d6fc87": "Zajmuje {usage}, gdy ta maszyna jest przeciążona. Zatrzymanie go pomoże pozostałym."
+  "0d23483df1d6fc87": "Zajmuje {usage}, gdy ta maszyna jest przeciążona. Zatrzymanie go pomoże pozostałym.",
+  "c4e9b5a68368e9e8": "Brak dopasowań",
+  "9a1dafe07b8ce33d": "{current} z {total}",
+  "0d8761c57796fb94": "Znajdź w wątku",
+  "f67b82db6ff66321": "Poprzednie dopasowanie",
+  "bac07cd397c7d1a8": "Następne dopasowanie"
 }
