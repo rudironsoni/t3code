@@ -13,13 +13,14 @@ function useWorkspacePage() {
   );
 }
 
-export function useSidebarWorkspaceTabs(): "picker" | "toolbar" | null {
+export function useSidebarWorkspaceTabs(): "dock" | "picker" | "toolbar" | null {
   const { layout } = useAdaptiveWorkspaceLayout();
   const deviceType = useDeviceType();
   const metrics = useNativeLayoutMetrics();
   const page = useWorkspacePage();
-  if (Platform.OS !== "ios" || !layout.usesSplitView || page) return null;
-  if (deviceType === "pad") return null;
+  if (Platform.OS !== "ios" || !layout.usesSplitView) return null;
+  if (deviceType === "phone") return "dock";
+  if (page || deviceType === "pad") return null;
   // Portrait Duo has no system rail; keep its tabs in the sidebar like iPad.
   if (deviceType === "duo-unfolded" && (metrics?.verticalBarEdge ?? "none") === "none")
     return "picker";

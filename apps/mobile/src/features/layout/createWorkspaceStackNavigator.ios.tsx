@@ -535,6 +535,7 @@ function WorkspaceStackView(props: ViewProps & { readonly nativeColumns: boolean
     setPushedDetailKey(topDetailKey);
     if (topDetailKey !== undefined && primaryVisible) setPrimaryVisible(false);
   }
+  if (layout.usesSplitView && primaryVisible) setPrimaryVisible(false);
   // Detail-only histories must stay single-stack: placeholder descriptors cannot own sidebar actions or setOptions.
   const primaryRoute = projection.primary;
   if (!primaryRoute) return <V5StackView {...props} />;
@@ -586,7 +587,9 @@ function WorkspaceStackView(props: ViewProps & { readonly nativeColumns: boolean
           ) : (
             <V5CardStackView
               {...props}
-              onRootVisibilityChange={setPrimaryVisible}
+              onRootVisibilityChange={
+                !layout.usesSplitView && !headerOnly ? setPrimaryVisible : undefined
+              }
               onNativePopChange={setNativelyPoppingWorkspaceRoute}
               descriptors={slotDescriptors}
               state={{
@@ -686,8 +689,8 @@ function WorkspaceStackNavigator({
   );
   return (
     <NativeWorkspaceModeContext value={usesNativeWorkspaceColumns}>
-      <NavigationContent>
-        <WorkspaceTabsProvider settingsOpen={settingsOpen}>
+      <WorkspaceTabsProvider settingsOpen={settingsOpen}>
+        <NavigationContent>
           <WorkspaceStackView
             nativeColumns={usesNativeWorkspaceColumns}
             {...rest}
@@ -696,8 +699,8 @@ function WorkspaceStackNavigator({
             descriptors={descriptors}
             navigation={navigation}
           />
-        </WorkspaceTabsProvider>
-      </NavigationContent>
+        </NavigationContent>
+      </WorkspaceTabsProvider>
     </NativeWorkspaceModeContext>
   );
 }

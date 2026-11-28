@@ -108,7 +108,7 @@ import {
   NativeWorkspaceInspectorContext,
 } from "../../native/v5-workspace-context";
 
-import { useNativeLayoutMetrics } from "../../native/native-layout-metrics";
+import { useDeviceType, useNativeLayoutMetrics } from "../../native/native-layout-metrics";
 import { AndroidHingeObserver } from "../../native/AndroidHingeObserver";
 import { WindowHingeContext } from "../../native/window-hinge-context";
 import { useAndroidWorkspaceRoot } from "./workspace/AndroidWorkspaceTabsProvider";
@@ -122,10 +122,12 @@ import {
   workspaceTabNavigationState,
 } from "./workspace/workspace-tab-navigation";
 import {
+  WORKSPACE_DOCK,
   workspaceTabOf,
   workspaceUsesColumns,
   type WorkspaceTab,
 } from "./workspace/workspace-tabs-state";
+import { WorkspaceTabDock } from "./workspace/WorkspaceTabDock";
 import { workspaceRoutesOf } from "./workspace-overlay-routes";
 import { SettingsWorkspaceLayout } from "../settings/SettingsWorkspaceLayout";
 import { WorkspaceThreadSidebar } from "./workspace/WorkspaceThreadSidebar";
@@ -274,9 +276,11 @@ function AdaptiveWorkspaceLayoutContent(
   const usesPresentationHost = use(WorkspacePresentationHostContext);
   const windowDimensions = useWindowDimensions();
   const nativeMetrics = useNativeLayoutMetrics();
+  const deviceType = useDeviceType();
   const { width: windowWidth, height } = nativeMetrics ?? windowDimensions;
   const pathname = props.pathname;
   const workspace = useWorkspaceTabs();
+  const phoneSidebarDock = Platform.OS === "ios" && deviceType === "phone" && workspace !== null;
   // Settings and Usage occupy the workspace rather than a list/detail pair.
   const androidSettingsOpen = useAndroidWorkspaceRoot()?.settingsOpen ?? false;
   const safeAreaInsets = useSafeAreaInsets();
@@ -1050,7 +1054,15 @@ function AdaptiveWorkspaceLayoutContent(
             sidebarAnimatedStyle,
           ]}
         >
-          <Animated.View className="flex-1" style={listPaneAnimatedStyle}>
+          <Animated.View
+            className="flex-1"
+            style={[
+              listPaneAnimatedStyle,
+              phoneSidebarDock && {
+                paddingBottom: WORKSPACE_DOCK.height + WORKSPACE_DOCK.bottomGap,
+              },
+            ]}
+          >
             <PaneContext value="sidebar">
               <RenderErrorBoundary
                 renderFallback={(fallback) => (
@@ -1065,6 +1077,7 @@ function AdaptiveWorkspaceLayoutContent(
                 {sidebar ?? <WorkspaceThreadSidebar />}
               </RenderErrorBoundary>
             </PaneContext>
+            {phoneSidebarDock ? <WorkspaceTabDock placement="column" /> : null}
             {/* Keep the pill under the content throughout the sidebar's clipping animation. */}
             {floatingTabsEnabled && !workspacePage ? (
               <FloatingWorkspaceTabs
@@ -1207,7 +1220,7 @@ function AdaptiveWorkspaceLayoutContent(
                 {props.children}
               </WorkspaceColumnsRendererContext>
             ) : (
-              renderColumns(props.children)
+              <View className="flex-1 bg-screen">{renderColumns(props.children)}</View>
             )}
           </WindowHingeContext>
         </WorkspacePaneStateContext>
